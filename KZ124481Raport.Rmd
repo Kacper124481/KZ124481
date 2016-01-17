@@ -4,8 +4,9 @@ author: "Kacper Żurański 124481"
 date: "11.01.2016"
 output:
      html_document:
-       toc: true
+       keep_md: yes
        theme: united
+       toc: yes
 ---
 
 
