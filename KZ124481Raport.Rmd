@@ -21,23 +21,19 @@ library("knitr")
 library("dplyr")
 library("reshape2")
 library("ggplot2")
+library("ggExtra")
 ```
    
 2.Kod zapewniający powtarzalność wyników przy każdym uruchomieniu raportu na tych samych danych
 ---------------
-set.seed(1212)
+set.seed(12)
    
 
 3.Kod pozwalający wczytać dane z pliku;
 ---------------
 ```{r}
-getwd()
-
-#initial <- read.csv("all_summary.csv", nrows = 100)
-#classes <- sapply(initial, class)
-#tabAll <- read.csv("all_summary.csv",colClasses = classes)
-#tabAll <- read.csv("all_summary.csv",nrows=100)
-tmp <-read.csv("all_summary.txt", TRUE, ";",nrows=100)
+#getwd()
+tmp <-read.csv("all_summary.txt", TRUE, ";")
 tabAll <- tbl_df(tmp);
 # pamietac zeby zmienic na pierwsze rozwiazanie!
 ```
@@ -45,15 +41,21 @@ tabAll <- tbl_df(tmp);
 4.Kod usuwający z danych wiersze posiadające wartość zmiennej res_name równą: &#x201C;DA&#x201D;,&#x201C;DC&#x201D;,&#x201C;DT&#x201D;, &#x201C;DU&#x201D;, &#x201C;DG&#x201D;, &#x201C;DI&#x201D;,&#x201C;UNK&#x201D;, &#x201C;UNX&#x201D;, &#x201C;UNL&#x201D;, &#x201C;PR&#x201D;, &#x201C;PD&#x201D;, &#x201C;Y1&#x201D;, &#x201C;EU&#x201D;, &#x201C;N&#x201D;, &#x201C;15P&#x201D;, &#x201C;UQ&#x201D;, &#x201C;PX4&#x201D; lub &#x201C;NAN&#x201D;;
 ---------------
 ```{r}
-Tab4 <- tabAll[tabAll$res_name != 'DA' | tabAll$res_name != 'DC' | tabAll$res_name != 'DT' | tabAll$res_name != 'DU' | tabAll$res_name != 'DG' | tabAll$res_name != 'DI' | tabAll$res_name != 'UNK' | tabAll$res_name != 'UNX'| tabAll$res_name != 'UNL' | tabAll$res_name != 'PR' | tabAll$res_name != 'PD' | tabAll$res_name != 'Y1' | tabAll$res_name != 'EU' | tabAll$res_name != 'N'| tabAll$res_name != '15P' | tabAll$res_name != 'UQ' | tabAll$res_name != 'PX4' | tabAll$res_name != 'NAN']
-#TabTmp
+
+#terrible idea :(
+#tabAll <- na.omit(tabAll)
+#Tab4 <- tabAll[tabAll$res_name != 'DA' | tabAll$res_name != 'DC' | tabAll$res_name != 'DT' | #tabAll$res_name != 'DU' | tabAll$res_name != 'DG' | tabAll$res_name != 'DI' | tabAll$res_name != #'UNK' | tabAll$res_name != 'UNX'| tabAll$res_name != 'UNL' | tabAll$res_name != 'PR' | #tabAll$res_name != 'PD' | tabAll$res_name != 'Y1' | tabAll$res_name != 'EU' | tabAll$res_name != 'N'| #tabAll$res_name != '15P' | tabAll$res_name != 'UQ' | tabAll$res_name != 'PX4' | tabAll$res_name != #'NAN']
+
+Tab4 <-  tabAll %>% filter(!(res_name %in% c('DA','DC','DT', 'DU', 'DG', 'DI','UNK', 'UNX', 'UNL', 'PR', 'PD', 'Y1', 'EU', 'N', '15P', 'UQ', 'PX4', 'NAN')))
+
+#Tab4
 ```
 
 5.Kod pozostawiający tylko unikatowe pary wartości (pdb_code, res_name)
 ---------------
 ```{r}
 #Tab5<-unique(Tab4[c(Tab4$pdb_code,Tab4$res_name)])
-
+   
 up <- Tab4 %>% select(pdb_code, res_name)
 filter <- !duplicated(up)
 Tab5 <- Tab4 %>% filter(filter)
@@ -83,7 +85,7 @@ t1 <- melt(t1,na.rm = TRUE)
 
 ggplot(data = t1, aes(Var2 , Var1 ,Var3 , Var4 ,fill=value))+scale_fill_gradient2(low = "black", high = "White", mid = "grey", 
   midpoint = 0, limit = c(-0.01,0.01), space = "Lab", 
-  name="Pearson\nCorrelation")
+  name="Pearson\nCorrelation")+ geom_bar(stat = "identity" , color = "blue")
 ```
 
 
@@ -91,13 +93,10 @@ ggplot(data = t1, aes(Var2 , Var1 ,Var3 , Var4 ,fill=value))+scale_fill_gradient
 ---------------
 ```{r}
 
-#kable(unique(Tab4["res_name"]))
-sort(table(Tab4["res_name"]))
+#sort(table(Tab4["res_name"]))
 
 counter <- Tab4  %>% count(res_name)
 kable(counter)
-
-
 
 ggplot(data = counter, aes(x =res_name , y = n , fill = n)) + geom_bar(stat = "identity" , color = "blue")+scale_fill_gradient2(low = "red", high = "black", mid = "grey")
 
@@ -106,22 +105,105 @@ ggplot(data = counter, aes(x =res_name , y = n , fill = n)) + geom_bar(stat = "i
 
 9.Wykresy rozkładów liczby atomów (local_res_atom_non_h_count) i elektronów (local_res_atom_non_h_electron_sum)
 ---------------
+
+Rozklad atomow
+
 ```{r}
 
+#select <- Tab4  %>% select(res_name,local_res_atom_non_h_count)
+
+ggplot(Tab4, aes(x=local_res_atom_non_h_count)) + geom_histogram(binwidth = 1, fill=I("red"), col=I("green")) + labs(title="local_res_atom_non_h_count")
 ```
+
+Rozklad eletkronow
+
+```{r}
+
+ggplot(Tab4, aes(x=local_res_atom_non_h_electron_sum)) + geom_histogram(binwidth = 8, fill=I("blue"), col=I("green")) + labs(title="local_res_atom_non_h_electron_sum")
+```
+
 10.Próbę odtworzenia następującego wykresu (oś X - liczba elektronów, oś y - liczba atomów)
 ---------------
 ```{r}
 
+Main  <- ggplot(Tab4, aes(x=local_res_atom_non_h_electron_sum, y=local_res_atom_non_h_count)) + stat_density2d(aes(fill=..level..), geom="polygon") + scale_fill_gradientn(colours=c("darkslateblue", "yellow", "red")) + theme(legend.position = "none", axis.title = element_blank(), panel.background = element_rect(fill = "darkslateblue"), panel.grid=element_blank(), panel.border=element_blank()) + scale_y_continuous(expand = c(0, 0), limits = c(0, 100), breaks=seq(0,100, by=20)) + scale_x_continuous(expand = c(0, 0), limits = c(0, 650), breaks=seq(0,650, by=100))
+
+#blank<-ggplot(mtcars, aes(x = wt, y = mpg)) + geom_blank()
+blank<-ggplot(color="white")+ theme_classic()
+
+hist_right  <- ggplot(Tab4, aes(x=dict_atom_non_h_count)) + geom_histogram(binwidth = 1, fill=I("red"), col=I("black")) + xlim(c(0,100)) + coord_flip() + theme(axis.text = element_blank(), axis.title = element_blank(), line = element_blank(), panel.background = element_blank())
+
+hist_up  <- ggplot(Tab4, aes(x=local_res_atom_non_h_electron_sum)) + geom_histogram(binwidth = 6.5, fill=I("red"), col=I("black")) + xlim(c(0,650)) + theme(axis.text = element_blank(), axis.title = element_blank(), line = element_blank(), panel.background = element_blank())
+
+uklad <- ggplot(Tab4, aes(x = local_res_atom_non_h_electron_sum, y = local_res_atom_non_h_count)) + geom_blank() + theme(axis.text = element_blank(), axis.title = element_blank(), line = element_blank(), panel.background = element_blank())
+
+gridExtra::grid.arrange(hist_up,blank, Main, hist_right, ncol = 2, nrow = 2, widths = c(3, 1), heights = c(1, 3))
+
+
 ```
 11.Tabelę pokazującą 10 klas z największą niezgodnością liczby atomów (local_res_atom_non_h_count vs dict_atom_non_h_count) i tabelę pokazującą 10 klas z największą niezgodnością liczby elektronów (local_res_atom_non_h_electron_sum vs dict_atom_non_h_electron_sum;)
 ---------------
+
+Tabela atomow
+
 ```{r}
+Top10 <- Tab4 %>% 
+select(class=res_name, local_res_atom_non_h_count, dict_atom_non_h_count) %>%
+mutate(difference=abs(local_res_atom_non_h_count - dict_atom_non_h_count)) %>%
+arrange(desc(difference)) %>%
+distinct(class) %>%
+slice(1:10)
+
+aI <- Tab4 %>% 
+select(class=res_name, local_res_atom_non_h_count, dict_atom_non_h_count) %>%
+mutate(difference=abs(local_res_atom_non_h_count - dict_atom_non_h_count)) %>%
+filter(class %in% Top10$class) %>%
+group_by(class) %>%
+summarise(minimum = min(difference),
+            maximum = max(difference),
+            mean = mean(difference),
+            median = median(difference),
+            variation = var(difference),
+            std_dev = sd(difference)) %>%
+ungroup() %>%
+arrange(desc(maximum))
+
+kable(aI)
 
 ```
+
+Tabela elektronow
+
+```{r}
+Top10 <- Tab4 %>% 
+select(class=res_name, local_res_atom_non_h_electron_sum, dict_atom_non_h_electron_sum) %>%
+mutate(difference=abs(local_res_atom_non_h_electron_sum - dict_atom_non_h_electron_sum)) %>%
+arrange(desc(difference)) %>%
+distinct(class) %>%
+slice(1:10)
+
+eI <- Tab4 %>% 
+select(class=res_name, local_res_atom_non_h_electron_sum, dict_atom_non_h_electron_sum) %>%
+mutate(difference=abs(local_res_atom_non_h_electron_sum - dict_atom_non_h_electron_sum)) %>%
+filter(class %in% Top10$class) %>%
+group_by(class) %>%
+summarise(minimum = min(difference),
+            maximum = max(difference),
+            mean = mean(difference),
+            median = median(difference),
+            variation = var(difference),
+            std_dev = sd(difference)) %>%
+ungroup() %>%
+arrange(desc(maximum))
+
+kable(eI)
+
+```
+
 12.Sekcję pokazującą rozkład wartości wszystkich kolumn zaczynających się od part_01 z zaznaczeniem (graficznym i liczbowym) średniej wartości;
 ---------------
 ```{r}
+
 
 ```
 13.Sekcję sprawdzającą czy na podstawie wartości innych kolumn można przewidzieć liczbę elektronów i atomów oraz z jaką dokładnością można dokonać takiej predykcji; trafność regresji powinna zostać oszacowana na podstawie miar R^2 i RMSE;
