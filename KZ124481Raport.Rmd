@@ -1,0 +1,136 @@
+---
+title: "Raport zaliczeniowy"
+author: "Kacper Żurański 124481"
+date: "11.01.2016"
+output:
+     html_document:
+       toc: true
+       theme: united
+---
+
+
+Główne wnioski z calego projektu
+---------------
+- wypisuje kod wraz z wynikami
+
+1. Kod wyliczający wykorzystane biblioteki
+---------------
+```{r}
+library("knitr")
+library("dplyr")
+library("reshape2")
+library("ggplot2")
+```
+   
+2.Kod zapewniający powtarzalność wyników przy każdym uruchomieniu raportu na tych samych danych
+---------------
+set.seed(1212)
+   
+
+3.Kod pozwalający wczytać dane z pliku;
+---------------
+```{r}
+getwd()
+
+#initial <- read.csv("all_summary.csv", nrows = 100)
+#classes <- sapply(initial, class)
+#tabAll <- read.csv("all_summary.csv",colClasses = classes)
+#tabAll <- read.csv("all_summary.csv",nrows=100)
+tmp <-read.csv("all_summary.txt", TRUE, ";",nrows=100)
+tabAll <- tbl_df(tmp);
+# pamietac zeby zmienic na pierwsze rozwiazanie!
+```
+
+4.Kod usuwający z danych wiersze posiadające wartość zmiennej res_name równą: &#x201C;DA&#x201D;,&#x201C;DC&#x201D;,&#x201C;DT&#x201D;, &#x201C;DU&#x201D;, &#x201C;DG&#x201D;, &#x201C;DI&#x201D;,&#x201C;UNK&#x201D;, &#x201C;UNX&#x201D;, &#x201C;UNL&#x201D;, &#x201C;PR&#x201D;, &#x201C;PD&#x201D;, &#x201C;Y1&#x201D;, &#x201C;EU&#x201D;, &#x201C;N&#x201D;, &#x201C;15P&#x201D;, &#x201C;UQ&#x201D;, &#x201C;PX4&#x201D; lub &#x201C;NAN&#x201D;;
+---------------
+```{r}
+Tab4 <- tabAll[tabAll$res_name != 'DA' | tabAll$res_name != 'DC' | tabAll$res_name != 'DT' | tabAll$res_name != 'DU' | tabAll$res_name != 'DG' | tabAll$res_name != 'DI' | tabAll$res_name != 'UNK' | tabAll$res_name != 'UNX'| tabAll$res_name != 'UNL' | tabAll$res_name != 'PR' | tabAll$res_name != 'PD' | tabAll$res_name != 'Y1' | tabAll$res_name != 'EU' | tabAll$res_name != 'N'| tabAll$res_name != '15P' | tabAll$res_name != 'UQ' | tabAll$res_name != 'PX4' | tabAll$res_name != 'NAN']
+#TabTmp
+```
+
+5.Kod pozostawiający tylko unikatowe pary wartości (pdb_code, res_name)
+---------------
+```{r}
+#Tab5<-unique(Tab4[c(Tab4$pdb_code,Tab4$res_name)])
+
+up <- Tab4 %>% select(pdb_code, res_name)
+filter <- !duplicated(up)
+Tab5 <- Tab4 %>% filter(filter)
+#Tab5
+
+
+```
+
+6.Krótkie podsumowanie wartości w każdej kolumnie;
+---------------
+```{r}
+kable(summary(Tab5))
+```
+
+7.Sekcje sprawdzającą korelacje między zmiennymi; sekcja ta powinna zawierać jakąś formę graficznej prezentacji korelacji
+---------------
+```{r}
+Tab7num <- sapply(Tab5, is.numeric)
+Tab7num1 <- Tab5[ , Tab7num] 
+Tab7num1 <- round(cor(Tab7num1),2)
+
+
+t1 <- Tab7num1[,c("local_res_atom_O_count","local_res_atom_C_count","local_res_atom_N_count","local_res_atom_S_count")]
+t1 <- melt(t1,na.rm = TRUE)
+
+#t1
+
+ggplot(data = t1, aes(Var2 , Var1 ,Var3 , Var4 ,fill=value))+scale_fill_gradient2(low = "black", high = "White", mid = "grey", 
+  midpoint = 0, limit = c(-0.01,0.01), space = "Lab", 
+  name="Pearson\nCorrelation")
+```
+
+
+8.Określenie ile przykładów ma każda z klas (res_name);
+---------------
+```{r}
+
+#kable(unique(Tab4["res_name"]))
+sort(table(Tab4["res_name"]))
+
+counter <- Tab4  %>% count(res_name)
+kable(counter)
+
+
+
+ggplot(data = counter, aes(x =res_name , y = n , fill = n)) + geom_bar(stat = "identity" , color = "blue")+scale_fill_gradient2(low = "red", high = "black", mid = "grey")
+
+
+```
+
+9.Wykresy rozkładów liczby atomów (local_res_atom_non_h_count) i elektronów (local_res_atom_non_h_electron_sum)
+---------------
+```{r}
+
+```
+10.Próbę odtworzenia następującego wykresu (oś X - liczba elektronów, oś y - liczba atomów)
+---------------
+```{r}
+
+```
+11.Tabelę pokazującą 10 klas z największą niezgodnością liczby atomów (local_res_atom_non_h_count vs dict_atom_non_h_count) i tabelę pokazującą 10 klas z największą niezgodnością liczby elektronów (local_res_atom_non_h_electron_sum vs dict_atom_non_h_electron_sum;)
+---------------
+```{r}
+
+```
+12.Sekcję pokazującą rozkład wartości wszystkich kolumn zaczynających się od part_01 z zaznaczeniem (graficznym i liczbowym) średniej wartości;
+---------------
+```{r}
+
+```
+13.Sekcję sprawdzającą czy na podstawie wartości innych kolumn można przewidzieć liczbę elektronów i atomów oraz z jaką dokładnością można dokonać takiej predykcji; trafność regresji powinna zostać oszacowana na podstawie miar R^2 i RMSE;
+---------------
+```{r}
+
+```
+14.Sekcję próbującą stworzyć klasyfikator przewidujący wartość atrybutu res_name (w tej sekcji należy wykorzystać wiedzę z pozostałych punktów oraz wykonać dodatkowe czynności, które mogą poprawić trafność klasyfikacji); klasyfikator powinien być wybrany w ramach optymalizacji parametrów na zbiorze walidującym; przewidywany błąd na danych z reszty populacji powinien zostać oszacowany na danych inne niż uczące za pomocą mechanizmu (stratyfikowanej!) oceny krzyżowej lub (stratyfikowanego!) 
+zbioru testowego.
+---------------
+```{r}
+
+```
