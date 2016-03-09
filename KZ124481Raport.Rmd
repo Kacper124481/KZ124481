@@ -3,10 +3,10 @@ title: "Raport zaliczeniowy"
 author: "Kacper Żurański 124481"
 date: "11.01.2016"
 output:
-     html_document:
-       keep_md: yes
-       theme: united
-       toc: yes
+    html_document:
+      keep_md: yes
+      theme: united
+      toc: yes
 ---
 
 
@@ -17,17 +17,23 @@ Główne wnioski z calego projektu
 1. Kod wyliczający wykorzystane biblioteki
 ---------------
 ```{r}
+
 library("knitr")
 library("dplyr")
 library("reshape2")
 library("ggplot2")
 library("ggExtra")
+library("hydroGOF")
+
+library("cluster")
+library("iterators")
+
 ```
-   
+  
 2.Kod zapewniający powtarzalność wyników przy każdym uruchomieniu raportu na tych samych danych
 ---------------
 set.seed(12)
-   
+  
 
 3.Kod pozwalający wczytać dane z pliku;
 ---------------
@@ -55,7 +61,7 @@ Tab4 <-  tabAll %>% filter(!(res_name %in% c('DA','DC','DT', 'DU', 'DG', 'DI','U
 ---------------
 ```{r}
 #Tab5<-unique(Tab4[c(Tab4$pdb_code,Tab4$res_name)])
-   
+  
 up <- Tab4 %>% select(pdb_code, res_name)
 filter <- !duplicated(up)
 Tab5 <- Tab4 %>% filter(filter)
@@ -84,8 +90,8 @@ t1 <- melt(t1,na.rm = TRUE)
 #t1
 
 ggplot(data = t1, aes(Var2 , Var1 ,Var3 , Var4 ,fill=value))+scale_fill_gradient2(low = "black", high = "White", mid = "grey", 
-  midpoint = 0, limit = c(-0.01,0.01), space = "Lab", 
-  name="Pearson\nCorrelation")+ geom_bar(stat = "identity" , color = "blue")
+ midpoint = 0, limit = c(-0.01,0.01), space = "Lab", 
+ name="Pearson\nCorrelation")+ geom_bar(stat = "identity" , color = "blue")
 ```
 
 
@@ -126,7 +132,8 @@ ggplot(Tab4, aes(x=local_res_atom_non_h_electron_sum)) + geom_histogram(binwidth
 ---------------
 ```{r}
 
-Main  <- ggplot(Tab4, aes(x=local_res_atom_non_h_electron_sum, y=local_res_atom_non_h_count)) + stat_density2d(aes(fill=..level..), geom="polygon") + scale_fill_gradientn(colours=c("darkslateblue", "yellow", "red")) + theme(legend.position = "none", axis.title = element_blank(), panel.background = element_rect(fill = "darkslateblue"), panel.grid=element_blank(), panel.border=element_blank()) + scale_y_continuous(expand = c(0, 0), limits = c(0, 100), breaks=seq(0,100, by=20)) + scale_x_continuous(expand = c(0, 0), limits = c(0, 650), breaks=seq(0,650, by=100))
+Main  <- ggplot(Tab4, aes(x=local_res_atom_non_h_electron_sum, y=local_res_atom_non_h_count)) + stat_density2d(aes(fill=..level..), geom="polygon") + scale_fill_gradientn(colours=c("darkslateblue", "yellow", "red")) + theme(legend.position = "none", axis.title = element_blank(), panel.background = element_rect(fill = "darkslateblue"), panel.grid=element_blank(), panel.border=element_blank()) + scale_y_continuous(expand = c(0, 0), limits = c(0, 100), breaks=seq(0,100, by=20)) + 
+scale_x_continuous(expand = c(0, 0), limits = c(0, 650), breaks=seq(0,650, by=100))
 
 #blank<-ggplot(mtcars, aes(x = wt, y = mpg)) + geom_blank()
 blank<-ggplot(color="white")+ theme_classic()
@@ -141,62 +148,38 @@ gridExtra::grid.arrange(hist_up,blank, Main, hist_right, ncol = 2, nrow = 2, wid
 
 
 ```
+
 11.Tabelę pokazującą 10 klas z największą niezgodnością liczby atomów (local_res_atom_non_h_count vs dict_atom_non_h_count) i tabelę pokazującą 10 klas z największą niezgodnością liczby elektronów (local_res_atom_non_h_electron_sum vs dict_atom_non_h_electron_sum;)
 ---------------
 
 Tabela atomow
 
 ```{r}
-Top10 <- Tab4 %>% 
-select(class=res_name, local_res_atom_non_h_count, dict_atom_non_h_count) %>%
-mutate(difference=abs(local_res_atom_non_h_count - dict_atom_non_h_count)) %>%
-arrange(desc(difference)) %>%
-distinct(class) %>%
-slice(1:10)
+Top10 <- Tab4
 
-aI <- Tab4 %>% 
-select(class=res_name, local_res_atom_non_h_count, dict_atom_non_h_count) %>%
-mutate(difference=abs(local_res_atom_non_h_count - dict_atom_non_h_count)) %>%
-filter(class %in% Top10$class) %>%
-group_by(class) %>%
-summarise(minimum = min(difference),
-            maximum = max(difference),
-            mean = mean(difference),
-            median = median(difference),
-            variation = var(difference),
-            std_dev = sd(difference)) %>%
-ungroup() %>%
-arrange(desc(maximum))
+Top10 <- mutate(Top10,diff=abs(local_res_atom_non_h_count - dict_atom_non_h_count))
 
-kable(aI)
+Top10 <- select(Top10 , res_name , local_res_atom_non_h_count, dict_atom_non_h_count , diff)
 
+#head(Top10[order(Top10$diff), ])
+Top10 <- Top10[with(Top10,order(-diff)),]
+Top10 <- Top10[1:10,]
+kable(Top10)
 ```
 
 Tabela elektronow
 
 ```{r}
-Top10 <- Tab4 %>% 
-select(class=res_name, local_res_atom_non_h_electron_sum, dict_atom_non_h_electron_sum) %>%
-mutate(difference=abs(local_res_atom_non_h_electron_sum - dict_atom_non_h_electron_sum)) %>%
-arrange(desc(difference)) %>%
-distinct(class) %>%
-slice(1:10)
+Top10 <- Tab4
 
-eI <- Tab4 %>% 
-select(class=res_name, local_res_atom_non_h_electron_sum, dict_atom_non_h_electron_sum) %>%
-mutate(difference=abs(local_res_atom_non_h_electron_sum - dict_atom_non_h_electron_sum)) %>%
-filter(class %in% Top10$class) %>%
-group_by(class) %>%
-summarise(minimum = min(difference),
-            maximum = max(difference),
-            mean = mean(difference),
-            median = median(difference),
-            variation = var(difference),
-            std_dev = sd(difference)) %>%
-ungroup() %>%
-arrange(desc(maximum))
+Top10 <- mutate(Top10,diff=abs(local_res_atom_non_h_electron_sum - dict_atom_non_h_electron_sum))
 
-kable(eI)
+Top10 <- select(Top10 , res_name , local_res_atom_non_h_electron_sum, dict_atom_non_h_electron_sum , diff)
+
+#head(Top10[order(Top10$diff), ])
+Top10 <- Top10[with(Top10,order(-diff)),]
+Top10 <- Top10[1:10,]
+kable(Top10)
 
 ```
 
@@ -204,16 +187,88 @@ kable(eI)
 ---------------
 ```{r}
 
+TabP1 <- Tab4[  , grepl( "part_01" , names(Tab4) ) ]
+dfav <- select(Tab4, matches("part_01"))
+
+nums <- sapply(dfav, as.numeric)
+
+nums <- colMeans(nums, na.rm = FALSE, dims = 1)
+nums <- nums[complete.cases(nums)]
+
+
+ggplot(TabP1, aes(part_01_blob_electron_sum)) + geom_histogram(aes(width=200, fill = ..count..))+ geom_vline(aes(xintercept=as.numeric(nums[1]) ),linetype="dotted" , size=1) + geom_vline(aes(xintercept=as.numeric(nums[2]) ),linetype="dashed" , size=1) + geom_vline(aes(xintercept=as.numeric(nums[3]) ),linetype="dotdash" , size=1) + theme_classic() +  ggtitle("Sekcja pokazująca rozkład wartości wszystkich kolumn") + ylab("Counter")
+
 
 ```
+
 13.Sekcję sprawdzającą czy na podstawie wartości innych kolumn można przewidzieć liczbę elektronów i atomów oraz z jaką dokładnością można dokonać takiej predykcji; trafność regresji powinna zostać oszacowana na podstawie miar R^2 i RMSE;
 ---------------
+
+
+Elektrony
+
 ```{r}
 
+#Tab13 <- sapply(Tab4, as.numeric)
+#Tab13 <- Tab13[complete.cases(Tab13)]
+
+Tab13 <- Tab4
+Tab13[is.na(Tab4)] <- 0
+Tab13 <- Tab13[sapply(Tab13, is.numeric)]
+Tablm <- lm(local_res_atom_non_h_electron_sum  ~ ., Tab13) #adds regression line to plot
+#squared sigma
+summary(Tablm)
+
+#head(Tab4$local_res_atom_non_h_electron_sum)
+#head(Tab13)
+#head(rmse(Tab4$local_res_atom_non_h_electron_sum, as.numeric(Tab13), na.rm=TRUE))
+
 ```
+
+Atomy
+```{r}
+
+Tab13 <- Tab4
+Tab13[is.na(Tab4)] <- 0
+Tab13 <- Tab13[sapply(Tab13, is.numeric)]
+Tablm <- lm(local_res_atom_non_h_count ~ ., Tab13) #adds regression line to plot
+#squared sigma
+summary(Tablm)
+
+
+#lm_data <- lm_data[sapply(lm_data, is.numeric)]
+#rmse(sim, obs, na.rm=TRUE)
+```
+
+
+
 14.Sekcję próbującą stworzyć klasyfikator przewidujący wartość atrybutu res_name (w tej sekcji należy wykorzystać wiedzę z pozostałych punktów oraz wykonać dodatkowe czynności, które mogą poprawić trafność klasyfikacji); klasyfikator powinien być wybrany w ramach optymalizacji parametrów na zbiorze walidującym; przewidywany błąd na danych z reszty populacji powinien zostać oszacowany na danych inne niż uczące za pomocą mechanizmu (stratyfikowanej!) oceny krzyżowej lub (stratyfikowanego!) 
 zbioru testowego.
 ---------------
 ```{r}
 
+```
+
+15. Dodatkowe - Proszę samodzielnie wybrać podzbiór atrybutów i 
+spróbować pogrupować przykłady. Pana Żurańskiego poproszę o 
+wykorzystanie w tym celu algorytmu AHC (lub innego hierarchicznego)
+Należy określić przy tym sugerowaną liczbę skupień i 
+w miarę możliwości zwizualizować charakterystykę uzyskanych skupień (np. 
+za pomocą Scatter Matrix albo Parallel Plots
+---------------
+```{r}
+# https://stat.ethz.ch/R-manual/R-devel/library/cluster/html/agnes.html
+#summary(Tab4)
+
+TabAHC <- Tab4 %>% select(res_name , res_id , local_res_atom_non_h_count , local_res_atom_non_h_electron_sum)
+
+TabAHC[is.na(TabAHC)] <- 0
+#TabAHC <- TabAHC[sapply(TabAHC, is.numeric)]
+TabAHC <- sapply(TabAHC, as.numeric)
+
+#data(TabAHC)
+#head(TabAHC)
+an1 <- agnes(head(TabAHC), metric = "manhattan", stand = TRUE)
+plot(an1)
+#nie mo&#xBF;na przydzieli&#xE6; wektora o rozmiarze 6.0 Gb Wykonywanie wstrzymane
 ```

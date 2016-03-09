@@ -62,11 +62,54 @@ library("ggExtra")
 ```
 ## Warning: package 'ggExtra' was built under R version 3.2.3
 ```
-   
+
+```r
+library("hydroGOF")
+```
+
+```
+## Warning: package 'hydroGOF' was built under R version 3.2.3
+```
+
+```
+## Loading required package: zoo
+```
+
+```
+## Warning: package 'zoo' was built under R version 3.2.3
+```
+
+```
+## 
+## Attaching package: 'zoo'
+```
+
+```
+## The following objects are masked from 'package:base':
+## 
+##     as.Date, as.Date.numeric
+```
+
+```r
+library("cluster")
+```
+
+```
+## Warning: package 'cluster' was built under R version 3.2.3
+```
+
+```r
+library("iterators")
+```
+
+```
+## Warning: package 'iterators' was built under R version 3.2.3
+```
+  
 2.Kod zapewniający powtarzalność wyników przy każdym uruchomieniu raportu na tych samych danych
 ---------------
 set.seed(12)
-   
+  
 
 3.Kod pozwalający wczytać dane z pliku;
 ---------------
@@ -96,7 +139,7 @@ Tab4 <-  tabAll %>% filter(!(res_name %in% c('DA','DC','DT', 'DU', 'DG', 'DI','U
 
 ```r
 #Tab5<-unique(Tab4[c(Tab4$pdb_code,Tab4$res_name)])
-   
+  
 up <- Tab4 %>% select(pdb_code, res_name)
 filter <- !duplicated(up)
 Tab5 <- Tab4 %>% filter(filter)
@@ -140,8 +183,8 @@ t1 <- melt(t1,na.rm = TRUE)
 #t1
 
 ggplot(data = t1, aes(Var2 , Var1 ,Var3 , Var4 ,fill=value))+scale_fill_gradient2(low = "black", high = "White", mid = "grey", 
-  midpoint = 0, limit = c(-0.01,0.01), space = "Lab", 
-  name="Pearson\nCorrelation")+ geom_bar(stat = "identity" , color = "blue")
+ midpoint = 0, limit = c(-0.01,0.01), space = "Lab", 
+ name="Pearson\nCorrelation")+ geom_bar(stat = "identity" , color = "blue")
 ```
 
 ```
@@ -2885,7 +2928,8 @@ ggplot(Tab4, aes(x=local_res_atom_non_h_electron_sum)) + geom_histogram(binwidth
 ---------------
 
 ```r
-Main  <- ggplot(Tab4, aes(x=local_res_atom_non_h_electron_sum, y=local_res_atom_non_h_count)) + stat_density2d(aes(fill=..level..), geom="polygon") + scale_fill_gradientn(colours=c("darkslateblue", "yellow", "red")) + theme(legend.position = "none", axis.title = element_blank(), panel.background = element_rect(fill = "darkslateblue"), panel.grid=element_blank(), panel.border=element_blank()) + scale_y_continuous(expand = c(0, 0), limits = c(0, 100), breaks=seq(0,100, by=20)) + scale_x_continuous(expand = c(0, 0), limits = c(0, 650), breaks=seq(0,650, by=100))
+Main  <- ggplot(Tab4, aes(x=local_res_atom_non_h_electron_sum, y=local_res_atom_non_h_count)) + stat_density2d(aes(fill=..level..), geom="polygon") + scale_fill_gradientn(colours=c("darkslateblue", "yellow", "red")) + theme(legend.position = "none", axis.title = element_blank(), panel.background = element_rect(fill = "darkslateblue"), panel.grid=element_blank(), panel.border=element_blank()) + scale_y_continuous(expand = c(0, 0), limits = c(0, 100), breaks=seq(0,100, by=20)) + 
+scale_x_continuous(expand = c(0, 0), limits = c(0, 650), breaks=seq(0,650, by=100))
 
 #blank<-ggplot(mtcars, aes(x = wt, y = mpg)) + geom_blank()
 blank<-ggplot(color="white")+ theme_classic()
@@ -2925,6 +2969,7 @@ gridExtra::grid.arrange(hist_up,blank, Main, hist_right, ncol = 2, nrow = 2, wid
 ```
 
 ![](KZ124481Raport_files/figure-html/unnamed-chunk-10-1.png)\
+
 11.Tabelę pokazującą 10 klas z największą niezgodnością liczby atomów (local_res_atom_non_h_count vs dict_atom_non_h_count) i tabelę pokazującą 10 klas z największą niezgodnością liczby elektronów (local_res_atom_non_h_electron_sum vs dict_atom_non_h_electron_sum;)
 ---------------
 
@@ -2932,94 +2977,3376 @@ Tabela atomow
 
 
 ```r
-Top10 <- Tab4 %>% 
-select(class=res_name, local_res_atom_non_h_count, dict_atom_non_h_count) %>%
-mutate(difference=abs(local_res_atom_non_h_count - dict_atom_non_h_count)) %>%
-arrange(desc(difference)) %>%
-distinct(class) %>%
-slice(1:10)
+Top10 <- Tab4
 
-aI <- Tab4 %>% 
-select(class=res_name, local_res_atom_non_h_count, dict_atom_non_h_count) %>%
-mutate(difference=abs(local_res_atom_non_h_count - dict_atom_non_h_count)) %>%
-filter(class %in% Top10$class) %>%
-group_by(class) %>%
-summarise(minimum = min(difference),
-            maximum = max(difference),
-            mean = mean(difference),
-            median = median(difference),
-            variation = var(difference),
-            std_dev = sd(difference)) %>%
-ungroup() %>%
-arrange(desc(maximum))
+Top10 <- mutate(Top10,diff=abs(local_res_atom_non_h_count - dict_atom_non_h_count))
 
-kable(aI)
+Top10 <- select(Top10 , res_name , local_res_atom_non_h_count, dict_atom_non_h_count , diff)
+
+#head(Top10[order(Top10$diff), ])
+Top10 <- Top10[with(Top10,order(-diff)),]
+Top10 <- Top10[1:10,]
+kable(Top10)
 ```
 
 
 
-class    minimum   maximum        mean   median   variation    std_dev
-------  --------  --------  ----------  -------  ----------  ---------
-PEU           64        69   67.000000     67.5      6.0000    2.44949
-CDL            0        60   28.339623     19.0    595.4978   24.40282
-PC1           15        46   33.888889     42.0    202.1111   14.21658
-PEE            1        46   13.222222      2.0    250.7949   15.83650
-0ET            0        44   11.000000      0.0    484.0000   22.00000
-PGV            0        42    8.787234      0.0    259.1711   16.09879
-PE3            0        40   30.000000     33.0    156.5714   12.51285
-LI1            4        37   18.230769     13.0    137.5256   11.72713
-CPQ           33        33   33.000000     33.0          NA        NaN
-VV7           33        33   33.000000     33.0      0.0000    0.00000
+res_name    local_res_atom_non_h_count   dict_atom_non_h_count   diff
+---------  ---------------------------  ----------------------  -----
+PEU                                 14                      83     69
+PEU                                 14                      83     69
+PEU                                 17                      83     66
+PEU                                 19                      83     64
+CDL                                 40                     100     60
+CDL                                 40                     100     60
+CDL                                 40                     100     60
+CDL                                 40                     100     60
+CDL                                 40                     100     60
+CDL                                 40                     100     60
 
 Tabela elektronow
 
 
 ```r
-Top10 <- Tab4 %>% 
-select(class=res_name, local_res_atom_non_h_electron_sum, dict_atom_non_h_electron_sum) %>%
-mutate(difference=abs(local_res_atom_non_h_electron_sum - dict_atom_non_h_electron_sum)) %>%
-arrange(desc(difference)) %>%
-distinct(class) %>%
-slice(1:10)
+Top10 <- Tab4
 
-eI <- Tab4 %>% 
-select(class=res_name, local_res_atom_non_h_electron_sum, dict_atom_non_h_electron_sum) %>%
-mutate(difference=abs(local_res_atom_non_h_electron_sum - dict_atom_non_h_electron_sum)) %>%
-filter(class %in% Top10$class) %>%
-group_by(class) %>%
-summarise(minimum = min(difference),
-            maximum = max(difference),
-            mean = mean(difference),
-            median = median(difference),
-            variation = var(difference),
-            std_dev = sd(difference)) %>%
-ungroup() %>%
-arrange(desc(maximum))
+Top10 <- mutate(Top10,diff=abs(local_res_atom_non_h_electron_sum - dict_atom_non_h_electron_sum))
 
-kable(eI)
+Top10 <- select(Top10 , res_name , local_res_atom_non_h_electron_sum, dict_atom_non_h_electron_sum , diff)
+
+#head(Top10[order(Top10$diff), ])
+Top10 <- Top10[with(Top10,order(-diff)),]
+Top10 <- Top10[1:10,]
+kable(Top10)
 ```
 
 
 
-class    minimum   maximum        mean   median    variation     std_dev
-------  --------  --------  ----------  -------  -----------  ----------
-PEU          426       460   446.50000      450     275.6667    16.60321
-CDL            0       360   170.26415      114   21458.0058   146.48551
-0ET            0       329    82.25000        0   27060.2500   164.50000
-PC1           91       302   217.00000      260    9107.2500    95.43191
-PEE            6       285    86.33333       12   10865.5385   104.23789
-PGV            0       281    59.51064        0   11877.3858   108.98342
-PE3            0       268   201.00000      221    7022.8571    83.80249
-B4P            0       236   102.33333       79   13245.4667   115.08895
-COA            0       236    24.51479        0    4117.1441    64.16498
-LI1           24       228   112.15385       78    5378.3077    73.33695
+res_name    local_res_atom_non_h_electron_sum   dict_atom_non_h_electron_sum   diff
+---------  ----------------------------------  -----------------------------  -----
+PEU                                        94                            554    460
+PEU                                        94                            554    460
+PEU                                       114                            554    440
+PEU                                       128                            554    426
+CDL                                       292                            652    360
+CDL                                       292                            652    360
+CDL                                       292                            652    360
+CDL                                       292                            652    360
+CDL                                       292                            652    360
+CDL                                       292                            652    360
+
 12.Sekcję pokazującą rozkład wartości wszystkich kolumn zaczynających się od part_01 z zaznaczeniem (graficznym i liczbowym) średniej wartości;
 ---------------
 
+```r
+TabP1 <- Tab4[  , grepl( "part_01" , names(Tab4) ) ]
+dfav <- select(Tab4, matches("part_01"))
+
+nums <- sapply(dfav, as.numeric)
+
+nums <- colMeans(nums, na.rm = FALSE, dims = 1)
+nums <- nums[complete.cases(nums)]
+
+
+ggplot(TabP1, aes(part_01_blob_electron_sum)) + geom_histogram(aes(width=200, fill = ..count..))+ geom_vline(aes(xintercept=as.numeric(nums[1]) ),linetype="dotted" , size=1) + geom_vline(aes(xintercept=as.numeric(nums[2]) ),linetype="dashed" , size=1) + geom_vline(aes(xintercept=as.numeric(nums[3]) ),linetype="dotdash" , size=1) + theme_classic() +  ggtitle("Sekcja pokazująca rozkład wartości wszystkich kolumn") + ylab("Counter")
+```
+
+```
+## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+```
+
+![](KZ124481Raport_files/figure-html/unnamed-chunk-13-1.png)\
+
 13.Sekcję sprawdzającą czy na podstawie wartości innych kolumn można przewidzieć liczbę elektronów i atomów oraz z jaką dokładnością można dokonać takiej predykcji; trafność regresji powinna zostać oszacowana na podstawie miar R^2 i RMSE;
 ---------------
+
+
+Elektrony
+
+
+```r
+#Tab13 <- sapply(Tab4, as.numeric)
+#Tab13 <- Tab13[complete.cases(Tab13)]
+
+Tab13 <- Tab4
+Tab13[is.na(Tab4)] <- 0
+```
+
+```
+## Warning in `[<-.factor`(`*tmp*`, thisvar, value = 0): invalid factor level,
+## NA generated
+```
+
+```r
+Tab13 <- Tab13[sapply(Tab13, is.numeric)]
+Tablm <- lm(local_res_atom_non_h_electron_sum  ~ ., Tab13) #adds regression line to plot
+#squared sigma
+summary(Tablm)
+```
+
+```
+## 
+## Call:
+## lm(formula = local_res_atom_non_h_electron_sum ~ ., data = Tab13)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -24.3245  -0.1096  -0.0201   0.0745  20.3493 
+## 
+## Coefficients: (82 not defined because of singularities)
+##                                               Estimate Std. Error  t value
+## (Intercept)                                 -5.759e-01  7.471e-02   -7.709
+## local_BAa                                           NA         NA       NA
+## local_NPa                                           NA         NA       NA
+## local_Ra                                            NA         NA       NA
+## local_RGa                                           NA         NA       NA
+## local_SRGa                                          NA         NA       NA
+## local_CCSa                                          NA         NA       NA
+## local_CCPa                                          NA         NA       NA
+## local_ZOa                                           NA         NA       NA
+## local_ZDa                                           NA         NA       NA
+## local_ZD_minus_a                                    NA         NA       NA
+## local_ZD_plus_a                                     NA         NA       NA
+## local_res_atom_count                         6.318e-03  2.482e-03    2.545
+## local_res_atom_non_h_count                   1.038e+01  2.693e-02  385.453
+## local_res_atom_non_h_occupancy_sum          -1.292e-01  6.138e-03  -21.048
+## local_res_atom_non_h_electron_occupancy_sum  1.762e-02  8.289e-04   21.257
+## local_res_atom_C_count                      -4.374e+00  2.684e-02 -162.952
+## local_res_atom_N_count                      -2.465e+00  3.585e-02  -68.758
+## local_res_atom_O_count                      -2.178e+00  2.869e-02  -75.930
+## local_res_atom_S_count                       4.784e+00  7.264e-02   65.863
+## dict_atom_non_h_count                       -1.022e+01  2.705e-02 -377.682
+## dict_atom_non_h_electron_sum                 9.804e-01  6.755e-04 1451.449
+## dict_atom_C_count                            4.343e+00  2.617e-02  165.962
+## dict_atom_N_count                            2.429e+00  3.530e-02   68.828
+## dict_atom_O_count                            2.148e+00  2.790e-02   76.983
+## dict_atom_S_count                           -4.820e+00  7.243e-02  -66.552
+## part_00_blob_electron_sum                    1.272e+02  2.575e+02    0.494
+## part_00_blob_volume_sum                      9.298e-03  8.651e-03    1.075
+## part_00_blob_parts                          -1.405e-01  5.813e-02   -2.417
+## part_00_shape_O3                            -1.127e-07  1.521e-07   -0.741
+## part_00_shape_O4                            -2.508e-15  1.367e-14   -0.183
+## part_00_shape_O5                             3.789e-22  2.720e-21    0.139
+## part_00_shape_FL                             1.809e-17  6.289e-18    2.877
+## part_00_shape_O3_norm                       -1.394e-02  6.445e-01   -0.022
+## part_00_shape_O4_norm                       -4.081e-01  1.714e+00   -0.238
+## part_00_shape_O5_norm                       -1.460e+01  1.641e+01   -0.890
+## part_00_shape_FL_norm                        7.258e-01  6.020e-01    1.206
+## part_00_shape_I1                             1.486e-10  8.186e-11    1.815
+## part_00_shape_I2                            -8.103e-22  1.500e-21   -0.540
+## part_00_shape_I3                             1.320e-21  7.648e-22    1.726
+## part_00_shape_I4                            -2.800e-17  1.059e-17   -2.643
+## part_00_shape_I5                                    NA         NA       NA
+## part_00_shape_I6                            -5.955e-18  3.013e-18   -1.976
+## part_00_shape_I1_norm                        3.667e-02  2.489e-01    0.147
+## part_00_shape_I2_norm                        2.160e-01  1.445e-01    1.494
+## part_00_shape_I3_norm                       -3.832e-02  2.358e-02   -1.625
+## part_00_shape_I4_norm                       -1.220e+00  8.461e-01   -1.441
+## part_00_shape_I5_norm                               NA         NA       NA
+## part_00_shape_I6_norm                        2.450e-01  1.384e-01    1.770
+## part_00_shape_I1_scaled                     -1.170e+01  3.233e+01   -0.362
+## part_00_shape_I2_scaled                     -3.211e+03  4.165e+03   -0.771
+## part_00_shape_I3_scaled                     -4.820e+02  4.998e+02   -0.964
+## part_00_shape_I4_scaled                     -1.285e+03  2.053e+03   -0.626
+## part_00_shape_I5_scaled                      1.764e+03  2.056e+03    0.858
+## part_00_shape_I6_scaled                      1.653e+05  2.253e+05    0.734
+## part_00_shape_M000                                  NA         NA       NA
+## part_00_shape_E3_E1                         -3.806e-01  8.531e-01   -0.446
+## part_00_shape_E2_E1                          1.899e-01  5.084e-01    0.374
+## part_00_shape_E3_E2                         -1.413e-01  5.216e-01   -0.271
+## part_00_shape_sqrt_E1                        4.491e-02  6.402e-02    0.701
+## part_00_shape_sqrt_E2                       -8.873e-02  1.138e-01   -0.780
+## part_00_shape_sqrt_E3                        4.986e-02  1.982e-01    0.251
+## part_00_density_O3                           2.510e-07  3.065e-07    0.819
+## part_00_density_O4                          -4.046e-14  5.594e-14   -0.723
+## part_00_density_O5                           1.140e-20  1.531e-20    0.745
+## part_00_density_FL                          -1.179e-16  3.587e-17   -3.288
+## part_00_density_O3_norm                     -1.031e-01  2.501e-01   -0.412
+## part_00_density_O4_norm                     -2.587e-01  5.378e-01   -0.481
+## part_00_density_O5_norm                      8.978e-01  2.932e+00    0.306
+## part_00_density_FL_norm                      5.401e-02  8.311e-02    0.650
+## part_00_density_I1                          -3.543e-10  1.886e-10   -1.878
+## part_00_density_I2                           1.079e-20  9.390e-21    1.149
+## part_00_density_I3                          -6.960e-21  4.994e-21   -1.394
+## part_00_density_I4                           1.903e-16  5.725e-17    3.324
+## part_00_density_I5                                  NA         NA       NA
+## part_00_density_I6                           2.896e-17  1.735e-17    1.669
+## part_00_density_I1_norm                     -5.084e-02  6.808e-02   -0.747
+## part_00_density_I2_norm                     -1.892e-02  9.514e-03   -1.988
+## part_00_density_I3_norm                      2.716e-03  1.674e-03    1.623
+## part_00_density_I4_norm                     -2.633e-03  9.752e-02   -0.027
+## part_00_density_I5_norm                             NA         NA       NA
+## part_00_density_I6_norm                     -2.394e-02  1.991e-02   -1.202
+## part_00_density_I1_scaled                    5.125e+00  3.504e+00    1.462
+## part_00_density_I2_scaled                    7.374e+01  4.731e+01    1.559
+## part_00_density_I3_scaled                    3.915e+00  5.490e+00    0.713
+## part_00_density_I4_scaled                   -1.271e+01  9.412e+01   -0.135
+## part_00_density_I5_scaled                    1.068e+00  8.919e+01    0.012
+## part_00_density_I6_scaled                   -2.799e+03  2.115e+03   -1.324
+## part_00_density_M000                                NA         NA       NA
+## part_00_density_E3_E1                        6.686e-01  8.749e-01    0.764
+## part_00_density_E2_E1                       -4.087e-01  5.228e-01   -0.782
+## part_00_density_E3_E2                       -1.074e-02  5.342e-01   -0.020
+## part_00_density_sqrt_E1                     -3.145e-02  6.584e-02   -0.478
+## part_00_density_sqrt_E2                      1.493e-01  1.207e-01    1.237
+## part_00_density_sqrt_E3                     -2.627e-02  2.164e-01   -0.121
+## part_01_blob_electron_sum                    1.488e-02  1.165e-02    1.277
+## part_01_blob_volume_sum                     -1.189e-02  1.227e-02   -0.969
+## part_01_blob_parts                           2.262e-02  2.465e-02    0.917
+## part_01_shape_O3                             9.988e-08  2.005e-07    0.498
+## part_01_shape_O4                             6.836e-15  2.187e-14    0.313
+## part_01_shape_O5                            -1.041e-21  5.077e-21   -0.205
+## part_01_shape_FL                            -2.780e-17  1.018e-17   -2.730
+## part_01_shape_O3_norm                       -8.775e-01  6.761e-01   -1.298
+## part_01_shape_O4_norm                        8.115e-01  1.696e+00    0.479
+## part_01_shape_O5_norm                        3.267e+00  1.543e+01    0.212
+## part_01_shape_FL_norm                       -6.119e-01  5.387e-01   -1.136
+## part_01_shape_I1                            -1.255e-10  1.065e-10   -1.179
+## part_01_shape_I2                             7.212e-22  2.279e-21    0.316
+## part_01_shape_I3                            -1.664e-21  1.177e-21   -1.413
+## part_01_shape_I4                             3.927e-17  1.588e-17    2.473
+## part_01_shape_I5                                    NA         NA       NA
+## part_01_shape_I6                             7.359e-18  4.708e-18    1.563
+## part_01_shape_I1_norm                        1.208e-01  2.359e-01    0.512
+## part_01_shape_I2_norm                       -1.732e-01  1.158e-01   -1.496
+## part_01_shape_I3_norm                        3.432e-02  1.766e-02    1.943
+## part_01_shape_I4_norm                        8.077e-01  7.567e-01    1.067
+## part_01_shape_I5_norm                               NA         NA       NA
+## part_01_shape_I6_norm                       -2.459e-01  1.129e-01   -2.179
+## part_01_shape_I1_scaled                      2.515e+01  2.907e+01    0.865
+## part_01_shape_I2_scaled                      2.705e+03  2.412e+03    1.121
+## part_01_shape_I3_scaled                      2.621e+01  2.604e+02    0.101
+## part_01_shape_I4_scaled                      2.610e+03  1.567e+03    1.665
+## part_01_shape_I5_scaled                     -3.114e+03  1.601e+03   -1.945
+## part_01_shape_I6_scaled                     -4.159e+04  1.342e+05   -0.310
+## part_01_shape_M000                                  NA         NA       NA
+## part_01_shape_E3_E1                          1.283e+00  1.025e+00    1.252
+## part_01_shape_E2_E1                         -6.929e-01  6.021e-01   -1.151
+## part_01_shape_E3_E2                         -1.361e-01  6.259e-01   -0.217
+## part_01_shape_sqrt_E1                       -3.140e-02  7.475e-02   -0.420
+## part_01_shape_sqrt_E2                        1.283e-01  1.354e-01    0.947
+## part_01_shape_sqrt_E3                        2.065e-02  2.411e-01    0.086
+## part_01_density_O3                          -1.315e-07  3.707e-07   -0.355
+## part_01_density_O4                           2.118e-14  7.813e-14    0.271
+## part_01_density_O5                          -1.566e-20  2.483e-20   -0.631
+## part_01_density_FL                           1.536e-16  4.825e-17    3.183
+## part_01_density_O3_norm                      8.045e-02  2.685e-01    0.300
+## part_01_density_O4_norm                      2.810e-01  5.530e-01    0.508
+## part_01_density_O5_norm                      3.145e-01  2.851e+00    0.110
+## part_01_density_FL_norm                     -1.203e-01  8.492e-02   -1.417
+## part_01_density_I1                           2.713e-10  2.297e-10    1.181
+## part_01_density_I2                          -8.906e-21  1.226e-20   -0.726
+## part_01_density_I3                           7.264e-21  6.511e-21    1.116
+## part_01_density_I4                          -2.305e-16  7.432e-17   -3.102
+## part_01_density_I5                                  NA         NA       NA
+## part_01_density_I6                          -2.924e-17  2.346e-17   -1.246
+## part_01_density_I1_norm                     -5.078e-02  6.861e-02   -0.740
+## part_01_density_I2_norm                      1.343e-02  8.689e-03    1.545
+## part_01_density_I3_norm                     -1.892e-03  1.252e-03   -1.511
+## part_01_density_I4_norm                      1.605e-01  1.017e-01    1.579
+## part_01_density_I5_norm                             NA         NA       NA
+## part_01_density_I6_norm                      2.914e-02  1.693e-02    1.721
+## part_01_density_I1_scaled                    1.281e+00  3.633e+00    0.353
+## part_01_density_I2_scaled                   -3.109e+01  3.864e+01   -0.805
+## part_01_density_I3_scaled                   -5.448e+00  4.029e+00   -1.352
+## part_01_density_I4_scaled                   -4.064e+00  8.614e+01   -0.047
+## part_01_density_I5_scaled                   -4.316e+01  8.559e+01   -0.504
+## part_01_density_I6_scaled                    7.241e+02  1.483e+03    0.488
+## part_01_density_M000                                NA         NA       NA
+## part_01_density_E3_E1                       -1.596e+00  1.051e+00   -1.518
+## part_01_density_E2_E1                        9.530e-01  6.193e-01    1.539
+## part_01_density_E3_E2                        2.460e-01  6.410e-01    0.384
+## part_01_density_sqrt_E1                      7.247e-02  7.721e-02    0.939
+## part_01_density_sqrt_E2                     -1.809e-01  1.429e-01   -1.266
+## part_01_density_sqrt_E3                     -1.125e-02  2.613e-01   -0.043
+## part_02_blob_electron_sum                   -4.374e-03  6.942e-03   -0.630
+## part_02_blob_volume_sum                     -1.727e-02  8.612e-03   -2.006
+## part_02_blob_parts                          -1.570e-02  1.830e-02   -0.858
+## part_02_shape_O3                             1.225e-07  1.302e-07    0.940
+## part_02_shape_O4                             6.693e-15  1.905e-14    0.351
+## part_02_shape_O5                             2.636e-21  5.182e-21    0.509
+## part_02_shape_FL                             3.284e-18  1.115e-17    0.294
+## part_02_shape_O3_norm                       -4.227e-01  4.238e-01   -0.998
+## part_02_shape_O4_norm                        1.041e+00  8.170e-01    1.274
+## part_02_shape_O5_norm                       -1.708e+01  7.038e+00   -2.427
+## part_02_shape_FL_norm                        3.467e-01  2.105e-01    1.647
+## part_02_shape_I1                            -5.033e-11  6.322e-11   -0.796
+## part_02_shape_I2                            -1.701e-23  2.093e-21   -0.008
+## part_02_shape_I3                             5.030e-22  1.232e-21    0.408
+## part_02_shape_I4                            -6.857e-18  1.522e-17   -0.450
+## part_02_shape_I5                                    NA         NA       NA
+## part_02_shape_I6                            -2.149e-18  4.049e-18   -0.531
+## part_02_shape_I1_norm                        5.699e-02  1.098e-01    0.519
+## part_02_shape_I2_norm                        2.467e-02  3.328e-02    0.741
+## part_02_shape_I3_norm                       -4.277e-03  5.585e-03   -0.766
+## part_02_shape_I4_norm                       -4.254e-01  2.496e-01   -1.704
+## part_02_shape_I5_norm                               NA         NA       NA
+## part_02_shape_I6_norm                        2.541e-02  4.116e-02    0.617
+## part_02_shape_I1_scaled                     -6.810e+00  1.643e+01   -0.414
+## part_02_shape_I2_scaled                     -6.023e+02  1.090e+03   -0.553
+## part_02_shape_I3_scaled                     -3.540e+01  1.479e+02   -0.239
+## part_02_shape_I4_scaled                     -1.491e+03  8.952e+02   -1.665
+## part_02_shape_I5_scaled                      1.861e+03  8.481e+02    2.195
+## part_02_shape_I6_scaled                      6.327e+04  9.402e+04    0.673
+## part_02_shape_M000                                  NA         NA       NA
+## part_02_shape_E3_E1                          1.930e-01  8.286e-01    0.233
+## part_02_shape_E2_E1                          3.507e-01  5.114e-01    0.686
+## part_02_shape_E3_E2                          5.414e-01  5.131e-01    1.055
+## part_02_shape_sqrt_E1                        1.785e-02  5.479e-02    0.326
+## part_02_shape_sqrt_E2                        2.241e-02  9.456e-02    0.237
+## part_02_shape_sqrt_E3                        3.516e-01  1.740e-01    2.020
+## part_02_density_O3                          -2.940e-07  2.070e-07   -1.420
+## part_02_density_O4                           3.092e-14  5.241e-14    0.590
+## part_02_density_O5                          -1.537e-20  2.498e-20   -0.615
+## part_02_density_FL                          -1.262e-17  2.864e-17   -0.441
+## part_02_density_O3_norm                     -2.938e-02  1.858e-01   -0.158
+## part_02_density_O4_norm                     -5.481e-01  3.350e-01   -1.636
+## part_02_density_O5_norm                      4.262e+00  2.081e+00    2.048
+## part_02_density_FL_norm                      1.516e-02  4.626e-02    0.328
+## part_02_density_I1                           1.300e-10  1.163e-10    1.118
+## part_02_density_I2                          -4.459e-21  7.023e-21   -0.635
+## part_02_density_I3                          -5.579e-22  3.425e-21   -0.163
+## part_02_density_I4                           1.796e-17  4.300e-17    0.418
+## part_02_density_I5                                  NA         NA       NA
+## part_02_density_I6                           3.084e-19  1.210e-17    0.025
+## part_02_density_I1_norm                     -6.443e-03  3.871e-02   -0.166
+## part_02_density_I2_norm                     -1.443e-03  2.649e-03   -0.545
+## part_02_density_I3_norm                      1.928e-04  3.907e-04    0.493
+## part_02_density_I4_norm                     -3.060e-02  4.666e-02   -0.656
+## part_02_density_I5_norm                             NA         NA       NA
+## part_02_density_I6_norm                     -1.075e-03  7.507e-03   -0.143
+## part_02_density_I1_scaled                    1.719e+00  2.607e+00    0.659
+## part_02_density_I2_scaled                    8.168e+00  1.458e+01    0.560
+## part_02_density_I3_scaled                    7.943e-01  4.340e+00    0.183
+## part_02_density_I4_scaled                    5.784e+00  7.023e+01    0.082
+## part_02_density_I5_scaled                   -8.562e+00  6.407e+01   -0.134
+## part_02_density_I6_scaled                   -7.975e+02  1.381e+03   -0.577
+## part_02_density_M000                                NA         NA       NA
+## part_02_density_E3_E1                       -2.677e-01  8.395e-01   -0.319
+## part_02_density_E2_E1                       -3.371e-01  5.190e-01   -0.649
+## part_02_density_E3_E2                       -6.252e-01  5.200e-01   -1.202
+## part_02_density_sqrt_E1                      3.095e-02  5.645e-02    0.548
+## part_02_density_sqrt_E2                      2.022e-02  9.777e-02    0.207
+## part_02_density_sqrt_E3                     -3.228e-01  1.837e-01   -1.757
+## part_03_blob_electron_sum                    4.801e-03  6.111e-03    0.786
+## part_03_blob_volume_sum                      4.176e-03  9.210e-03    0.453
+## part_03_blob_parts                          -6.276e-03  1.942e-02   -0.323
+## part_03_shape_O3                            -2.207e-07  1.511e-07   -1.460
+## part_03_shape_O4                            -9.149e-16  2.895e-14   -0.032
+## part_03_shape_O5                            -9.736e-21  1.225e-20   -0.795
+## part_03_shape_FL                             2.194e-17  1.612e-17    1.361
+## part_03_shape_O3_norm                        4.365e-02  3.939e-01    0.111
+## part_03_shape_O4_norm                       -3.246e-01  7.023e-01   -0.462
+## part_03_shape_O5_norm                        8.169e+00  5.167e+00    1.581
+## part_03_shape_FL_norm                       -1.690e-01  1.524e-01   -1.109
+## part_03_shape_I1                             2.243e-11  8.361e-11    0.268
+## part_03_shape_I2                             1.669e-22  5.709e-21    0.029
+## part_03_shape_I3                            -1.053e-21  1.882e-21   -0.560
+## part_03_shape_I4                            -1.824e-17  2.179e-17   -0.837
+## part_03_shape_I5                                    NA         NA       NA
+## part_03_shape_I6                             4.218e-18  6.757e-18    0.624
+## part_03_shape_I1_norm                       -1.965e-01  9.763e-02   -2.013
+## part_03_shape_I2_norm                       -2.453e-02  2.165e-02   -1.133
+## part_03_shape_I3_norm                        1.405e-03  4.075e-03    0.345
+## part_03_shape_I4_norm                        1.961e-01  2.050e-01    0.957
+## part_03_shape_I5_norm                               NA         NA       NA
+## part_03_shape_I6_norm                        4.672e-02  3.090e-02    1.512
+## part_03_shape_I1_scaled                      6.174e+00  1.511e+01    0.409
+## part_03_shape_I2_scaled                      7.836e+02  9.473e+02    0.827
+## part_03_shape_I3_scaled                     -9.222e+01  1.306e+02   -0.706
+## part_03_shape_I4_scaled                     -5.453e+02  6.829e+02   -0.799
+## part_03_shape_I5_scaled                      5.903e+02  7.456e+02    0.792
+## part_03_shape_I6_scaled                     -9.256e+03  6.867e+04   -0.135
+## part_03_shape_M000                                  NA         NA       NA
+## part_03_shape_E3_E1                         -1.364e+00  8.742e-01   -1.560
+## part_03_shape_E2_E1                          3.660e-01  5.365e-01    0.682
+## part_03_shape_E3_E2                          6.826e-01  5.357e-01    1.274
+## part_03_shape_sqrt_E1                        2.511e-02  5.658e-02    0.444
+## part_03_shape_sqrt_E2                       -3.518e-02  9.757e-02   -0.361
+## part_03_shape_sqrt_E3                       -4.731e-01  1.843e-01   -2.568
+## part_03_density_O3                           3.893e-07  2.094e-07    1.859
+## part_03_density_O4                          -3.842e-15  6.076e-14   -0.063
+## part_03_density_O5                           4.319e-20  3.379e-20    1.278
+## part_03_density_FL                          -4.622e-17  3.363e-17   -1.374
+## part_03_density_O3_norm                     -1.679e-02  1.846e-01   -0.091
+## part_03_density_O4_norm                      8.545e-02  3.510e-01    0.243
+## part_03_density_O5_norm                     -1.988e+00  2.405e+00   -0.827
+## part_03_density_FL_norm                      1.431e-02  4.134e-02    0.346
+## part_03_density_I1                          -3.702e-11  1.299e-10   -0.285
+## part_03_density_I2                          -9.538e-23  1.296e-20   -0.007
+## part_03_density_I3                           4.282e-21  4.355e-21    0.983
+## part_03_density_I4                           3.265e-17  5.011e-17    0.652
+## part_03_density_I5                                  NA         NA       NA
+## part_03_density_I6                          -1.590e-17  1.530e-17   -1.039
+## part_03_density_I1_norm                      5.484e-02  4.382e-02    1.251
+## part_03_density_I2_norm                      6.065e-03  3.128e-03    1.939
+## part_03_density_I3_norm                     -9.226e-04  8.031e-04   -1.149
+## part_03_density_I4_norm                      3.635e-03  5.186e-02    0.070
+## part_03_density_I5_norm                             NA         NA       NA
+## part_03_density_I6_norm                     -4.815e-03  8.977e-03   -0.536
+## part_03_density_I1_scaled                    5.391e-01  2.753e+00    0.196
+## part_03_density_I2_scaled                   -6.949e+01  2.166e+01   -3.208
+## part_03_density_I3_scaled                    6.329e+00  2.450e+00    2.584
+## part_03_density_I4_scaled                    7.134e+01  5.961e+01    1.197
+## part_03_density_I5_scaled                   -9.415e+01  6.477e+01   -1.454
+## part_03_density_I6_scaled                   -1.631e+03  1.304e+03   -1.251
+## part_03_density_M000                                NA         NA       NA
+## part_03_density_E3_E1                        1.483e+00  8.799e-01    1.685
+## part_03_density_E2_E1                       -3.897e-01  5.407e-01   -0.721
+## part_03_density_E3_E2                       -7.231e-01  5.412e-01   -1.336
+## part_03_density_sqrt_E1                     -1.950e-02  5.892e-02   -0.331
+## part_03_density_sqrt_E2                      7.638e-03  9.886e-02    0.077
+## part_03_density_sqrt_E3                      4.922e-01  1.926e-01    2.555
+## part_04_blob_electron_sum                   -1.680e-02  5.843e-03   -2.875
+## part_04_blob_volume_sum                      2.392e-02  9.963e-03    2.400
+## part_04_blob_parts                           1.137e-02  2.073e-02    0.548
+## part_04_shape_O3                             4.092e-07  1.719e-07    2.380
+## part_04_shape_O4                            -6.847e-14  4.358e-14   -1.571
+## part_04_shape_O5                             1.986e-20  2.276e-20    0.872
+## part_04_shape_FL                            -1.361e-17  1.934e-17   -0.703
+## part_04_shape_O3_norm                        1.390e+00  3.891e-01    3.573
+## part_04_shape_O4_norm                       -1.807e+00  6.680e-01   -2.705
+## part_04_shape_O5_norm                        7.056e+00  4.334e+00    1.628
+## part_04_shape_FL_norm                        1.182e-01  1.502e-01    0.787
+## part_04_shape_I1                            -1.869e-10  9.341e-11   -2.001
+## part_04_shape_I2                             5.217e-21  9.875e-21    0.528
+## part_04_shape_I3                            -5.734e-22  2.451e-21   -0.234
+## part_04_shape_I4                             2.162e-17  2.410e-17    0.897
+## part_04_shape_I5                                    NA         NA       NA
+## part_04_shape_I6                             4.752e-18  9.193e-18    0.517
+## part_04_shape_I1_norm                        3.155e-02  1.019e-01    0.310
+## part_04_shape_I2_norm                        3.646e-03  1.910e-02    0.191
+## part_04_shape_I3_norm                       -2.647e-03  2.986e-03   -0.887
+## part_04_shape_I4_norm                       -1.528e-01  1.829e-01   -0.835
+## part_04_shape_I5_norm                               NA         NA       NA
+## part_04_shape_I6_norm                        4.265e-03  2.580e-02    0.165
+## part_04_shape_I1_scaled                     -1.025e+01  1.695e+01   -0.605
+## part_04_shape_I2_scaled                      2.823e+02  7.291e+02    0.387
+## part_04_shape_I3_scaled                      5.002e+01  1.099e+02    0.455
+## part_04_shape_I4_scaled                      6.659e+02  6.009e+02    1.108
+## part_04_shape_I5_scaled                     -2.470e+02  6.383e+02   -0.387
+## part_04_shape_I6_scaled                     -8.966e+04  8.300e+04   -1.080
+## part_04_shape_M000                                  NA         NA       NA
+## part_04_shape_E3_E1                         -3.614e-01  9.203e-01   -0.393
+## part_04_shape_E2_E1                          3.914e-01  5.751e-01    0.681
+## part_04_shape_E3_E2                          1.347e+00  5.575e-01    2.415
+## part_04_shape_sqrt_E1                       -9.556e-02  6.210e-02   -1.539
+## part_04_shape_sqrt_E2                        5.864e-02  1.014e-01    0.578
+## part_04_shape_sqrt_E3                        2.845e-02  1.908e-01    0.149
+## part_04_density_O3                          -4.655e-07  2.142e-07   -2.173
+## part_04_density_O4                           7.828e-14  7.729e-14    1.013
+## part_04_density_O5                          -2.630e-20  5.752e-20   -0.457
+## part_04_density_FL                           2.828e-17  3.950e-17    0.716
+## part_04_density_O3_norm                     -6.853e-01  2.302e-01   -2.977
+## part_04_density_O4_norm                      8.027e-01  4.322e-01    1.857
+## part_04_density_O5_norm                     -2.812e+00  2.689e+00   -1.046
+## part_04_density_FL_norm                     -1.118e-01  7.617e-02   -1.467
+## part_04_density_I1                           2.232e-10  1.334e-10    1.673
+## part_04_density_I2                          -8.463e-21  2.273e-20   -0.372
+## part_04_density_I3                           9.085e-22  4.669e-21    0.195
+## part_04_density_I4                          -3.565e-17  5.212e-17   -0.684
+## part_04_density_I5                                  NA         NA       NA
+## part_04_density_I6                          -6.144e-18  1.711e-17   -0.359
+## part_04_density_I1_norm                     -9.318e-03  5.439e-02   -0.171
+## part_04_density_I2_norm                     -2.755e-03  5.673e-03   -0.486
+## part_04_density_I3_norm                      1.115e-03  9.946e-04    1.121
+## part_04_density_I4_norm                      1.158e-01  7.973e-02    1.452
+## part_04_density_I5_norm                             NA         NA       NA
+## part_04_density_I6_norm                     -5.338e-03  1.206e-02   -0.442
+## part_04_density_I1_scaled                    2.480e+00  4.867e+00    0.510
+## part_04_density_I2_scaled                    1.030e+02  7.519e+01    1.370
+## part_04_density_I3_scaled                   -8.173e+00  6.312e+00   -1.295
+## part_04_density_I4_scaled                    3.825e+01  1.332e+02    0.287
+## part_04_density_I5_scaled                   -8.752e+01  1.323e+02   -0.661
+## part_04_density_I6_scaled                    4.039e+03  2.574e+03    1.570
+## part_04_density_M000                                NA         NA       NA
+## part_04_density_E3_E1                        2.920e-01  9.233e-01    0.316
+## part_04_density_E2_E1                       -5.380e-01  5.788e-01   -0.930
+## part_04_density_E3_E2                       -1.185e+00  5.620e-01   -2.108
+## part_04_density_sqrt_E1                      3.092e-02  6.469e-02    0.478
+## part_04_density_sqrt_E2                     -3.364e-02  1.025e-01   -0.328
+## part_04_density_sqrt_E3                     -3.661e-02  1.978e-01   -0.185
+## part_05_blob_electron_sum                    1.699e-02  5.894e-03    2.883
+## part_05_blob_volume_sum                     -2.484e-03  1.121e-02   -0.222
+## part_05_blob_parts                          -5.007e-02  2.361e-02   -2.120
+## part_05_shape_O3                            -3.917e-07  1.821e-07   -2.151
+## part_05_shape_O4                             4.081e-14  5.426e-14    0.752
+## part_05_shape_O5                             1.789e-20  3.411e-20    0.524
+## part_05_shape_FL                            -1.525e-17  2.349e-17   -0.649
+## part_05_shape_O3_norm                       -8.790e-01  4.019e-01   -2.187
+## part_05_shape_O4_norm                        7.543e-01  6.195e-01    1.218
+## part_05_shape_O5_norm                       -8.325e-01  4.507e+00   -0.185
+## part_05_shape_FL_norm                       -4.801e-02  1.453e-01   -0.330
+## part_05_shape_I1                             2.620e-10  9.572e-11    2.737
+## part_05_shape_I2                            -5.171e-21  1.192e-20   -0.434
+## part_05_shape_I3                             3.048e-21  2.938e-21    1.038
+## part_05_shape_I4                            -4.546e-18  2.970e-17   -0.153
+## part_05_shape_I5                                    NA         NA       NA
+## part_05_shape_I6                            -1.357e-17  9.643e-18   -1.407
+## part_05_shape_I1_norm                        4.187e-02  9.932e-02    0.422
+## part_05_shape_I2_norm                       -5.997e-04  1.487e-02   -0.040
+## part_05_shape_I3_norm                        2.315e-03  2.411e-03    0.960
+## part_05_shape_I4_norm                        1.158e-02  1.775e-01    0.065
+## part_05_shape_I5_norm                               NA         NA       NA
+## part_05_shape_I6_norm                       -9.255e-03  1.936e-02   -0.478
+## part_05_shape_I1_scaled                      6.470e+00  1.728e+01    0.374
+## part_05_shape_I2_scaled                     -2.971e+02  5.093e+02   -0.583
+## part_05_shape_I3_scaled                     -8.773e+01  7.996e+01   -1.097
+## part_05_shape_I4_scaled                     -1.535e+02  6.830e+02   -0.225
+## part_05_shape_I5_scaled                      2.414e+02  6.936e+02    0.348
+## part_05_shape_I6_scaled                      3.225e+04  8.032e+04    0.401
+## part_05_shape_M000                                  NA         NA       NA
+## part_05_shape_E3_E1                          9.983e-01  1.005e+00    0.993
+## part_05_shape_E2_E1                          1.149e-01  6.077e-01    0.189
+## part_05_shape_E3_E2                         -1.860e+00  5.814e-01   -3.199
+## part_05_shape_sqrt_E1                        1.124e-01  6.573e-02    1.710
+## part_05_shape_sqrt_E2                       -6.396e-02  1.049e-01   -0.610
+## part_05_shape_sqrt_E3                       -1.064e-01  2.052e-01   -0.519
+## part_05_density_O3                           4.372e-07  2.166e-07    2.018
+## part_05_density_O4                          -9.014e-14  8.478e-14   -1.063
+## part_05_density_O5                          -4.992e-20  8.223e-20   -0.607
+## part_05_density_FL                           6.605e-18  4.937e-17    0.134
+## part_05_density_O3_norm                      9.456e-01  2.682e-01    3.525
+## part_05_density_O4_norm                     -4.788e-01  4.568e-01   -1.048
+## part_05_density_O5_norm                      5.098e-01  3.330e+00    0.153
+## part_05_density_FL_norm                      6.204e-02  5.937e-02    1.045
+## part_05_density_I1                          -3.563e-10  1.470e-10   -2.424
+## part_05_density_I2                           1.265e-20  2.020e-20    0.626
+## part_05_density_I3                          -8.824e-21  4.632e-21   -1.905
+## part_05_density_I4                           3.812e-17  6.033e-17    0.632
+## part_05_density_I5                                  NA         NA       NA
+## part_05_density_I6                           3.656e-17  1.733e-17    2.110
+## part_05_density_I1_norm                     -5.579e-02  6.416e-02   -0.870
+## part_05_density_I2_norm                      3.936e-03  7.083e-03    0.556
+## part_05_density_I3_norm                     -2.465e-04  1.158e-03   -0.213
+## part_05_density_I4_norm                     -5.422e-02  6.252e-02   -0.867
+## part_05_density_I5_norm                             NA         NA       NA
+## part_05_density_I6_norm                      4.733e-03  1.104e-02    0.429
+## part_05_density_I1_scaled                   -2.277e+00  6.705e+00   -0.340
+## part_05_density_I2_scaled                   -4.823e+01  1.153e+02   -0.418
+## part_05_density_I3_scaled                    1.242e-01  7.458e+00    0.017
+## part_05_density_I4_scaled                   -1.050e+01  1.489e+02   -0.071
+## part_05_density_I5_scaled                    1.628e+01  1.372e+02    0.119
+## part_05_density_I6_scaled                    2.186e+03  6.823e+03    0.320
+## part_05_density_M000                                NA         NA       NA
+## part_05_density_E3_E1                       -1.049e+00  1.011e+00   -1.037
+## part_05_density_E2_E1                       -8.429e-02  6.156e-01   -0.137
+## part_05_density_E3_E2                        1.863e+00  5.851e-01    3.184
+## part_05_density_sqrt_E1                     -1.302e-01  6.894e-02   -1.888
+## part_05_density_sqrt_E2                      5.585e-02  1.059e-01    0.528
+## part_05_density_sqrt_E3                      7.172e-02  2.125e-01    0.338
+## part_06_blob_electron_sum                    4.535e-04  6.198e-03    0.073
+## part_06_blob_volume_sum                     -4.831e-03  1.257e-02   -0.384
+## part_06_blob_parts                          -1.977e-02  2.811e-02   -0.703
+## part_06_shape_O3                             1.723e-07  2.191e-07    0.786
+## part_06_shape_O4                             4.676e-14  8.586e-14    0.545
+## part_06_shape_O5                            -1.033e-19  8.557e-20   -1.207
+## part_06_shape_FL                            -7.885e-18  3.397e-17   -0.232
+## part_06_shape_O3_norm                       -2.828e-01  4.441e-01   -0.637
+## part_06_shape_O4_norm                        4.135e-01  5.909e-01    0.700
+## part_06_shape_O5_norm                        2.915e+00  5.143e+00    0.567
+## part_06_shape_FL_norm                        8.771e-02  1.903e-01    0.461
+## part_06_shape_I1                            -7.925e-11  1.413e-10   -0.561
+## part_06_shape_I2                             3.448e-21  2.299e-20    0.150
+## part_06_shape_I3                             5.694e-24  3.491e-21    0.002
+## part_06_shape_I4                             9.436e-18  4.141e-17    0.228
+## part_06_shape_I5                                    NA         NA       NA
+## part_06_shape_I6                             9.181e-21  1.270e-17    0.001
+## part_06_shape_I1_norm                       -6.123e-02  1.217e-01   -0.503
+## part_06_shape_I2_norm                       -7.036e-03  1.497e-02   -0.470
+## part_06_shape_I3_norm                        1.593e-04  1.800e-03    0.089
+## part_06_shape_I4_norm                       -6.487e-02  2.094e-01   -0.310
+## part_06_shape_I5_norm                               NA         NA       NA
+## part_06_shape_I6_norm                        5.485e-03  1.898e-02    0.289
+## part_06_shape_I1_scaled                      1.121e+01  2.052e+01    0.546
+## part_06_shape_I2_scaled                      1.455e+02  5.787e+02    0.251
+## part_06_shape_I3_scaled                     -2.026e+01  7.069e+01   -0.287
+## part_06_shape_I4_scaled                     -5.203e+02  8.709e+02   -0.597
+## part_06_shape_I5_scaled                      4.798e+02  8.590e+02    0.559
+## part_06_shape_I6_scaled                     -2.543e+04  8.011e+04   -0.317
+## part_06_shape_M000                                  NA         NA       NA
+## part_06_shape_E3_E1                          3.200e-02  1.104e+00    0.029
+## part_06_shape_E2_E1                         -3.890e-01  6.943e-01   -0.560
+## part_06_shape_E3_E2                         -5.515e-01  6.378e-01   -0.865
+## part_06_shape_sqrt_E1                        2.887e-05  7.403e-02    0.000
+## part_06_shape_sqrt_E2                       -7.547e-02  1.143e-01   -0.660
+## part_06_shape_sqrt_E3                        1.860e-01  2.331e-01    0.798
+## part_06_density_O3                          -8.927e-08  2.449e-07   -0.365
+## part_06_density_O4                          -8.006e-14  1.358e-13   -0.589
+## part_06_density_O5                           1.669e-19  1.910e-19    0.874
+## part_06_density_FL                           3.652e-17  7.392e-17    0.494
+## part_06_density_O3_norm                      1.796e-01  3.037e-01    0.591
+## part_06_density_O4_norm                     -3.431e-01  4.367e-01   -0.785
+## part_06_density_O5_norm                      5.107e-01  3.819e+00    0.134
+## part_06_density_FL_norm                     -5.208e-02  8.466e-02   -0.615
+## part_06_density_I1                           9.214e-11  1.836e-10    0.502
+## part_06_density_I2                           1.909e-21  2.939e-20    0.065
+## part_06_density_I3                           2.639e-21  5.393e-21    0.489
+## part_06_density_I4                          -4.723e-17  8.249e-17   -0.573
+## part_06_density_I5                                  NA         NA       NA
+## part_06_density_I6                          -1.019e-17  2.153e-17   -0.473
+## part_06_density_I1_norm                      2.251e-03  7.946e-02    0.028
+## part_06_density_I2_norm                      1.783e-03  7.925e-03    0.225
+## part_06_density_I3_norm                      2.707e-04  8.393e-04    0.322
+## part_06_density_I4_norm                      5.053e-02  8.421e-02    0.600
+## part_06_density_I5_norm                             NA         NA       NA
+## part_06_density_I6_norm                     -3.413e-03  1.186e-02   -0.288
+## part_06_density_I1_scaled                   -1.201e-01  8.205e+00   -0.015
+## part_06_density_I2_scaled                   -3.959e+01  9.966e+01   -0.397
+## part_06_density_I3_scaled                    3.097e+00  1.387e+01    0.223
+## part_06_density_I4_scaled                    1.778e+02  2.738e+02    0.649
+## part_06_density_I5_scaled                   -1.857e+02  2.522e+02   -0.736
+## part_06_density_I6_scaled                   -8.672e+02  9.896e+03   -0.088
+## part_06_density_M000                                NA         NA       NA
+## part_06_density_E3_E1                       -3.938e-02  1.109e+00   -0.036
+## part_06_density_E2_E1                        5.539e-01  7.016e-01    0.790
+## part_06_density_E3_E2                        6.028e-01  6.445e-01    0.935
+## part_06_density_sqrt_E1                      1.518e-02  7.768e-02    0.195
+## part_06_density_sqrt_E2                      5.196e-02  1.157e-01    0.449
+## part_06_density_sqrt_E3                     -2.201e-01  2.446e-01   -0.900
+## part_07_blob_electron_sum                   -3.564e-03  6.641e-03   -0.537
+## part_07_blob_volume_sum                      1.567e-02  1.468e-02    1.067
+## part_07_blob_parts                           5.439e-02  3.474e-02    1.566
+## part_07_shape_O3                            -3.145e-07  2.788e-07   -1.128
+## part_07_shape_O4                             5.189e-14  1.449e-13    0.358
+## part_07_shape_O5                             7.755e-20  2.169e-19    0.358
+## part_07_shape_FL                             4.936e-17  6.824e-17    0.723
+## part_07_shape_O3_norm                        2.710e-02  5.068e-01    0.053
+## part_07_shape_O4_norm                        7.361e-01  7.108e-01    1.035
+## part_07_shape_O5_norm                       -3.197e+00  5.665e+00   -0.564
+## part_07_shape_FL_norm                       -3.041e-01  2.383e-01   -1.276
+## part_07_shape_I1                             1.901e-11  2.083e-10    0.091
+## part_07_shape_I2                            -3.216e-20  4.756e-20   -0.676
+## part_07_shape_I3                            -2.444e-21  4.929e-21   -0.496
+## part_07_shape_I4                            -4.748e-17  7.435e-17   -0.639
+## part_07_shape_I5                                    NA         NA       NA
+## part_07_shape_I6                             5.351e-18  2.138e-17    0.250
+## part_07_shape_I1_norm                       -1.044e-01  1.461e-01   -0.715
+## part_07_shape_I2_norm                        8.712e-03  2.045e-02    0.426
+## part_07_shape_I3_norm                       -1.024e-03  2.855e-03   -0.359
+## part_07_shape_I4_norm                        4.016e-01  2.820e-01    1.424
+## part_07_shape_I5_norm                               NA         NA       NA
+## part_07_shape_I6_norm                        1.799e-02  2.767e-02    0.650
+## part_07_shape_I1_scaled                      2.079e+01  2.505e+01    0.830
+## part_07_shape_I2_scaled                     -3.713e+02  7.841e+02   -0.474
+## part_07_shape_I3_scaled                      7.915e+00  1.161e+02    0.068
+## part_07_shape_I4_scaled                      1.829e+02  9.714e+02    0.188
+## part_07_shape_I5_scaled                     -5.333e+02  9.738e+02   -0.548
+## part_07_shape_I6_scaled                     -8.144e+04  1.283e+05   -0.635
+## part_07_shape_M000                                  NA         NA       NA
+## part_07_shape_E3_E1                         -7.584e-01  1.187e+00   -0.639
+## part_07_shape_E2_E1                         -1.657e-01  7.626e-01   -0.217
+## part_07_shape_E3_E2                          1.590e+00  7.476e-01    2.127
+## part_07_shape_sqrt_E1                       -9.082e-03  8.518e-02   -0.107
+## part_07_shape_sqrt_E2                        1.219e-01  1.340e-01    0.910
+## part_07_shape_sqrt_E3                       -9.761e-03  2.580e-01   -0.038
+## part_07_density_O3                           7.610e-08  2.915e-07    0.261
+## part_07_density_O4                           4.173e-14  1.914e-13    0.218
+## part_07_density_O5                          -1.650e-19  3.568e-19   -0.462
+## part_07_density_FL                          -9.083e-17  1.091e-16   -0.832
+## part_07_density_O3_norm                      4.084e-02  3.663e-01    0.112
+## part_07_density_O4_norm                     -3.690e-01  6.418e-01   -0.575
+## part_07_density_O5_norm                      2.071e+00  5.368e+00    0.386
+## part_07_density_FL_norm                      2.694e-01  1.295e-01    2.080
+## part_07_density_I1                           6.844e-11  2.496e-10    0.274
+## part_07_density_I2                           3.647e-21  5.680e-20    0.064
+## part_07_density_I3                           1.757e-21  8.754e-21    0.201
+## part_07_density_I4                           5.909e-17  1.188e-16    0.497
+## part_07_density_I5                                  NA         NA       NA
+## part_07_density_I6                           2.736e-18  3.281e-17    0.083
+## part_07_density_I1_norm                      3.117e-02  9.335e-02    0.334
+## part_07_density_I2_norm                      4.111e-03  8.704e-03    0.472
+## part_07_density_I3_norm                      6.617e-04  1.248e-03    0.530
+## part_07_density_I4_norm                     -2.994e-01  1.397e-01   -2.144
+## part_07_density_I5_norm                             NA         NA       NA
+## part_07_density_I6_norm                     -1.771e-02  1.642e-02   -1.078
+## part_07_density_I1_scaled                    2.460e+00  1.021e+01    0.241
+## part_07_density_I2_scaled                   -1.132e+02  1.250e+02   -0.906
+## part_07_density_I3_scaled                    1.038e+01  1.308e+01    0.793
+## part_07_density_I4_scaled                   -3.825e+02  2.838e+02   -1.348
+## part_07_density_I5_scaled                    4.649e+02  2.772e+02    1.677
+## part_07_density_I6_scaled                   -4.969e+03  1.021e+04   -0.487
+## part_07_density_M000                                NA         NA       NA
+## part_07_density_E3_E1                        8.468e-01  1.187e+00    0.713
+## part_07_density_E2_E1                        1.160e-01  7.697e-01    0.151
+## part_07_density_E3_E2                       -1.625e+00  7.532e-01   -2.157
+## part_07_density_sqrt_E1                     -1.515e-02  8.903e-02   -0.170
+## part_07_density_sqrt_E2                     -1.546e-01  1.361e-01   -1.136
+## part_07_density_sqrt_E3                     -3.390e-03  2.690e-01   -0.013
+## part_08_blob_electron_sum                    3.247e-03  7.279e-03    0.446
+## part_08_blob_volume_sum                     -1.791e-03  1.833e-02   -0.098
+## part_08_blob_parts                          -3.266e-02  4.412e-02   -0.740
+## part_08_shape_O3                             5.687e-07  3.920e-07    1.451
+## part_08_shape_O4                            -1.598e-13  2.751e-13   -0.581
+## part_08_shape_O5                             1.127e-19  4.464e-19    0.253
+## part_08_shape_FL                            -1.176e-16  1.410e-16   -0.834
+## part_08_shape_O3_norm                       -5.507e-02  6.666e-01   -0.083
+## part_08_shape_O4_norm                        1.325e+00  1.154e+00    1.149
+## part_08_shape_O5_norm                       -4.463e+00  9.663e+00   -0.462
+## part_08_shape_FL_norm                       -1.518e-01  3.580e-01   -0.424
+## part_08_shape_I1                            -1.782e-10  3.122e-10   -0.571
+## part_08_shape_I2                            -3.978e-21  6.457e-20   -0.062
+## part_08_shape_I3                             5.671e-21  1.013e-20    0.560
+## part_08_shape_I4                             1.161e-16  1.535e-16    0.756
+## part_08_shape_I5                                    NA         NA       NA
+## part_08_shape_I6                             7.667e-18  4.126e-17    0.186
+## part_08_shape_I1_norm                        4.197e-02  2.240e-01    0.187
+## part_08_shape_I2_norm                        4.357e-03  3.810e-02    0.114
+## part_08_shape_I3_norm                       -1.393e-04  4.288e-03   -0.032
+## part_08_shape_I4_norm                        1.917e-01  4.188e-01    0.458
+## part_08_shape_I5_norm                               NA         NA       NA
+## part_08_shape_I6_norm                        8.161e-03  3.756e-02    0.217
+## part_08_shape_I1_scaled                     -2.516e+00  3.646e+01   -0.069
+## part_08_shape_I2_scaled                     -7.789e+02  1.631e+03   -0.478
+## part_08_shape_I3_scaled                     -6.953e+01  1.818e+02   -0.382
+## part_08_shape_I4_scaled                      5.033e+01  1.508e+03    0.033
+## part_08_shape_I5_scaled                     -1.129e+02  1.551e+03   -0.073
+## part_08_shape_I6_scaled                      3.550e+03  1.529e+05    0.023
+## part_08_shape_M000                                  NA         NA       NA
+## part_08_shape_E3_E1                         -5.451e-01  1.359e+00   -0.401
+## part_08_shape_E2_E1                          1.667e-02  9.168e-01    0.018
+## part_08_shape_E3_E2                         -5.121e-01  9.005e-01   -0.569
+## part_08_shape_sqrt_E1                       -8.019e-02  1.102e-01   -0.728
+## part_08_shape_sqrt_E2                       -1.209e-01  1.740e-01   -0.695
+## part_08_shape_sqrt_E3                        3.533e-01  3.317e-01    1.065
+## part_08_density_O3                          -5.011e-07  4.221e-07   -1.187
+## part_08_density_O4                           2.560e-13  3.400e-13    0.753
+## part_08_density_O5                          -1.733e-19  7.990e-19   -0.217
+## part_08_density_FL                           1.312e-16  2.021e-16    0.649
+## part_08_density_O3_norm                      2.547e-02  4.867e-01    0.052
+## part_08_density_O4_norm                     -6.490e-01  9.703e-01   -0.669
+## part_08_density_O5_norm                     -1.160e+00  7.674e+00   -0.151
+## part_08_density_FL_norm                      7.920e-02  1.917e-01    0.413
+## part_08_density_I1                           3.574e-11  4.081e-10    0.088
+## part_08_density_I2                           3.170e-20  9.884e-20    0.321
+## part_08_density_I3                          -2.132e-22  1.793e-20   -0.012
+## part_08_density_I4                          -1.441e-16  2.236e-16   -0.644
+## part_08_density_I5                                  NA         NA       NA
+## part_08_density_I6                          -2.790e-17  6.536e-17   -0.427
+## part_08_density_I1_norm                      3.888e-03  1.506e-01    0.026
+## part_08_density_I2_norm                     -2.709e-03  2.464e-02   -0.110
+## part_08_density_I3_norm                      1.429e-03  2.214e-03    0.645
+## part_08_density_I4_norm                     -2.940e-02  2.124e-01   -0.138
+## part_08_density_I5_norm                             NA         NA       NA
+## part_08_density_I6_norm                     -1.139e-02  2.072e-02   -0.550
+## part_08_density_I1_scaled                   -3.742e+00  1.809e+01   -0.207
+## part_08_density_I2_scaled                    2.013e+02  4.089e+02    0.492
+## part_08_density_I3_scaled                   -1.701e+01  4.050e+01   -0.420
+## part_08_density_I4_scaled                   -2.729e+01  5.456e+02   -0.050
+## part_08_density_I5_scaled                   -1.592e+02  5.395e+02   -0.295
+## part_08_density_I6_scaled                    2.594e+04  3.402e+04    0.763
+## part_08_density_M000                                NA         NA       NA
+## part_08_density_E3_E1                        3.281e-01  1.365e+00    0.240
+## part_08_density_E2_E1                        1.865e-01  9.315e-01    0.200
+## part_08_density_E3_E2                        5.756e-01  9.097e-01    0.633
+## part_08_density_sqrt_E1                      8.936e-02  1.152e-01    0.776
+## part_08_density_sqrt_E2                      8.737e-02  1.778e-01    0.491
+## part_08_density_sqrt_E3                     -3.422e-01  3.413e-01   -1.003
+## part_09_blob_electron_sum                   -1.567e-03  5.623e-03   -0.279
+## part_09_blob_volume_sum                     -1.462e-02  1.348e-02   -1.085
+## part_09_blob_parts                           1.066e-01  4.500e-02    2.370
+## part_09_shape_O3                            -8.943e-08  3.484e-07   -0.257
+## part_09_shape_O4                             1.791e-13  2.913e-13    0.615
+## part_09_shape_O5                            -5.606e-19  5.313e-19   -1.055
+## part_09_shape_FL                             1.166e-16  1.673e-16    0.697
+## part_09_shape_O3_norm                       -3.851e-02  5.356e-01   -0.072
+## part_09_shape_O4_norm                       -1.076e+00  1.136e+00   -0.947
+## part_09_shape_O5_norm                       -3.449e+00  9.384e+00   -0.368
+## part_09_shape_FL_norm                       -1.756e-01  3.499e-01   -0.502
+## part_09_shape_I1                             1.873e-10  2.442e-10    0.767
+## part_09_shape_I2                             7.767e-20  7.979e-20    0.973
+## part_09_shape_I3                            -1.921e-22  1.133e-20   -0.017
+## part_09_shape_I4                            -1.183e-16  1.743e-16   -0.679
+## part_09_shape_I5                                    NA         NA       NA
+## part_09_shape_I6                            -2.795e-17  3.862e-17   -0.724
+## part_09_shape_I1_norm                        1.594e-01  1.960e-01    0.813
+## part_09_shape_I2_norm                       -3.471e-03  3.431e-02   -0.101
+## part_09_shape_I3_norm                        1.384e-03  3.722e-03    0.372
+## part_09_shape_I4_norm                        4.644e-01  3.741e-01    1.241
+## part_09_shape_I5_norm                               NA         NA       NA
+## part_09_shape_I6_norm                       -2.981e-02  3.149e-02   -0.946
+## part_09_shape_I1_scaled                      8.676e-01  3.137e+01    0.028
+## part_09_shape_I2_scaled                      7.314e+02  1.532e+03    0.477
+## part_09_shape_I3_scaled                      6.298e+01  1.311e+02    0.480
+## part_09_shape_I4_scaled                      1.744e+02  1.515e+03    0.115
+## part_09_shape_I5_scaled                     -1.198e+03  1.480e+03   -0.809
+## part_09_shape_I6_scaled                     -4.668e+04  1.459e+05   -0.320
+## part_09_shape_M000                                  NA         NA       NA
+## part_09_shape_E3_E1                         -2.905e+00  1.296e+00   -2.241
+## part_09_shape_E2_E1                          1.004e+00  8.828e-01    1.138
+## part_09_shape_E3_E2                          1.390e+00  8.980e-01    1.548
+## part_09_shape_sqrt_E1                        2.033e-02  9.672e-02    0.210
+## part_09_shape_sqrt_E2                        1.541e-01  1.639e-01    0.940
+## part_09_shape_sqrt_E3                       -7.332e-01  3.012e-01   -2.434
+## part_09_density_O3                           2.786e-07  3.789e-07    0.735
+## part_09_density_O4                          -3.980e-13  4.188e-13   -0.950
+## part_09_density_O5                           1.441e-18  1.098e-18    1.312
+## part_09_density_FL                          -7.092e-17  2.470e-16   -0.287
+## part_09_density_O3_norm                     -2.580e-01  4.031e-01   -0.640
+## part_09_density_O4_norm                      1.783e+00  8.675e-01    2.056
+## part_09_density_O5_norm                     -3.721e+00  5.133e+00   -0.725
+## part_09_density_FL_norm                     -1.118e-01  1.812e-01   -0.617
+## part_09_density_I1                          -3.007e-10  3.490e-10   -0.862
+## part_09_density_I2                          -8.033e-20  1.241e-19   -0.648
+## part_09_density_I3                          -3.093e-21  1.849e-20   -0.167
+## part_09_density_I4                           6.289e-17  2.469e-16    0.255
+## part_09_density_I5                                  NA         NA       NA
+## part_09_density_I6                           4.697e-17  5.713e-17    0.822
+## part_09_density_I1_norm                     -2.080e-01  1.247e-01   -1.669
+## part_09_density_I2_norm                      6.245e-04  1.930e-02    0.032
+## part_09_density_I3_norm                     -2.970e-04  1.886e-03   -0.157
+## part_09_density_I4_norm                      1.360e-01  1.805e-01    0.753
+## part_09_density_I5_norm                             NA         NA       NA
+## part_09_density_I6_norm                      1.885e-02  1.876e-02    1.005
+## part_09_density_I1_scaled                    1.306e+01  1.411e+01    0.925
+## part_09_density_I2_scaled                    2.212e+01  3.180e+02    0.070
+## part_09_density_I3_scaled                   -1.273e+01  2.579e+01   -0.494
+## part_09_density_I4_scaled                    2.646e+01  4.791e+02    0.055
+## part_09_density_I5_scaled                   -1.025e+02  4.558e+02   -0.225
+## part_09_density_I6_scaled                    7.811e+03  2.512e+04    0.311
+## part_09_density_M000                                NA         NA       NA
+## part_09_density_E3_E1                        2.882e+00  1.296e+00    2.224
+## part_09_density_E2_E1                       -9.722e-01  8.967e-01   -1.084
+## part_09_density_E3_E2                       -1.458e+00  9.082e-01   -1.605
+## part_09_density_sqrt_E1                     -2.599e-03  1.006e-01   -0.026
+## part_09_density_sqrt_E2                     -1.984e-01  1.691e-01   -1.173
+## part_09_density_sqrt_E3                      8.289e-01  3.080e-01    2.691
+## local_volume                                -3.131e-06  1.013e-05   -0.309
+## local_electrons                             -1.272e+02  2.575e+02   -0.494
+## local_mean                                  -1.459e+00  1.540e+00   -0.947
+## local_std                                    1.156e+00  1.716e+00    0.674
+## local_min                                           NA         NA       NA
+## local_max                                    2.008e-02  2.811e-02    0.714
+## local_skewness                              -4.395e-01  9.155e-01   -0.480
+## local_parts                                         NA         NA       NA
+## weight_col                                          NA         NA       NA
+## grid_space                                          NA         NA       NA
+## solvent_radius                                      NA         NA       NA
+## solvent_opening_radius                              NA         NA       NA
+## resolution_max_limit                                NA         NA       NA
+## resolution                                   2.918e-02  1.486e-02    1.963
+## TwoFoFc_mean                                 4.782e+07  1.117e+07    4.283
+## TwoFoFc_std                                  2.104e+01  2.291e+00    9.183
+## TwoFoFc_square_std                          -1.643e+00  2.495e-01   -6.584
+## TwoFoFc_min                                 -1.217e-02  5.098e-02   -0.239
+## TwoFoFc_max                                  6.305e-02  1.073e-02    5.876
+## Fo_mean                                      1.373e+04  3.938e+04    0.349
+## Fo_std                                       7.444e+00  2.313e+00    3.219
+## Fo_square_std                               -1.047e+00  4.399e-01   -2.381
+## Fo_min                                       3.790e-01  6.828e-02    5.552
+## Fo_max                                       1.311e-01  2.260e-02    5.802
+## FoFc_mean                                   -4.780e+07  1.117e+07   -4.281
+## FoFc_std                                    -2.724e+01  1.885e+00  -14.452
+## FoFc_square_std                              6.784e-01  2.083e-01    3.256
+## FoFc_min                                     8.553e-02  1.855e-02    4.610
+## FoFc_max                                    -6.150e-02  7.342e-03   -8.376
+## Fc_mean                                     -4.789e+07  1.116e+07   -4.290
+## Fc_std                                      -2.192e+01  2.780e+00   -7.885
+## Fc_square_std                                1.603e+00  5.241e-01    3.059
+## Fc_min                                      -4.085e-01  5.962e-02   -6.852
+## Fc_max                                      -1.760e-01  2.083e-02   -8.448
+## solvent_mask_count                          -7.858e-09  1.848e-09   -4.251
+## void_mask_count                              1.635e-08  1.157e-08    1.413
+## modeled_mask_count                           7.352e-09  5.209e-09    1.411
+## solvent_ratio                                1.266e-01  8.326e-02    1.521
+## TwoFoFc_bulk_mean                            5.098e+05  1.585e+05    3.216
+## TwoFoFc_bulk_std                            -1.052e+01  3.442e+00   -3.055
+## TwoFoFc_void_mean                            1.850e+04  7.979e+03    2.319
+## TwoFoFc_void_std                            -6.130e+00  1.253e+00   -4.893
+## TwoFoFc_modeled_mean                         2.540e+05  1.860e+04   13.654
+## TwoFoFc_modeled_std                         -9.400e+00  1.421e+00   -6.617
+## Fo_bulk_mean                                -2.931e-01  1.446e+00   -0.203
+## Fo_bulk_std                                  2.629e-01  1.076e+00    0.244
+## Fo_void_mean                                 1.680e+00  1.354e+00    1.240
+## Fo_void_std                                  1.635e+00  1.703e+00    0.960
+## Fo_modeled_mean                              4.984e+00  1.648e+00    3.023
+## Fo_modeled_std                              -6.739e+00  1.470e+00   -4.585
+## FoFc_bulk_mean                              -5.098e+05  1.585e+05   -3.216
+## FoFc_bulk_std                                3.276e+00  1.128e+00    2.905
+## FoFc_void_mean                              -1.850e+04  7.978e+03   -2.319
+## FoFc_void_std                                2.934e+00  1.156e+00    2.538
+## FoFc_modeled_mean                           -2.540e+05  1.860e+04  -13.654
+## FoFc_modeled_std                             2.121e+01  1.041e+00   20.373
+## Fc_bulk_mean                                -5.098e+05  1.585e+05   -3.216
+## Fc_bulk_std                                 -1.747e+00  6.971e-01   -2.506
+## Fc_void_mean                                -1.850e+04  7.978e+03   -2.319
+## Fc_void_std                                  6.929e+00  1.124e+00    6.165
+## Fc_modeled_mean                             -2.540e+05  1.860e+04  -13.654
+## Fc_modeled_std                               1.294e+01  1.629e+00    7.944
+## TwoFoFc_void_fit_binormal_mean1              2.595e-02  8.672e-02    0.299
+## TwoFoFc_void_fit_binormal_std1               3.715e-01  1.801e-01    2.062
+## TwoFoFc_void_fit_binormal_mean2              4.522e-78  3.084e-78    1.466
+## TwoFoFc_void_fit_binormal_std2                      NA         NA       NA
+## TwoFoFc_void_fit_binormal_scale             -3.945e-02  2.770e-02   -1.424
+## TwoFoFc_solvent_fit_normal_mean             -5.948e+00  2.522e+00   -2.359
+## TwoFoFc_solvent_fit_normal_std               8.207e+00  3.205e+00    2.561
+## part_step_FoFc_std_min                              NA         NA       NA
+## part_step_FoFc_std_max                              NA         NA       NA
+## part_step_FoFc_std_step                             NA         NA       NA
+##                                             Pr(>|t|)    
+## (Intercept)                                 1.30e-14 ***
+## local_BAa                                         NA    
+## local_NPa                                         NA    
+## local_Ra                                          NA    
+## local_RGa                                         NA    
+## local_SRGa                                        NA    
+## local_CCSa                                        NA    
+## local_CCPa                                        NA    
+## local_ZOa                                         NA    
+## local_ZDa                                         NA    
+## local_ZD_minus_a                                  NA    
+## local_ZD_plus_a                                   NA    
+## local_res_atom_count                        0.010931 *  
+## local_res_atom_non_h_count                   < 2e-16 ***
+## local_res_atom_non_h_occupancy_sum           < 2e-16 ***
+## local_res_atom_non_h_electron_occupancy_sum  < 2e-16 ***
+## local_res_atom_C_count                       < 2e-16 ***
+## local_res_atom_N_count                       < 2e-16 ***
+## local_res_atom_O_count                       < 2e-16 ***
+## local_res_atom_S_count                       < 2e-16 ***
+## dict_atom_non_h_count                        < 2e-16 ***
+## dict_atom_non_h_electron_sum                 < 2e-16 ***
+## dict_atom_C_count                            < 2e-16 ***
+## dict_atom_N_count                            < 2e-16 ***
+## dict_atom_O_count                            < 2e-16 ***
+## dict_atom_S_count                            < 2e-16 ***
+## part_00_blob_electron_sum                   0.621394    
+## part_00_blob_volume_sum                     0.282425    
+## part_00_blob_parts                          0.015653 *  
+## part_00_shape_O3                            0.458847    
+## part_00_shape_O4                            0.854485    
+## part_00_shape_O5                            0.889212    
+## part_00_shape_FL                            0.004018 ** 
+## part_00_shape_O3_norm                       0.982747    
+## part_00_shape_O4_norm                       0.811856    
+## part_00_shape_O5_norm                       0.373644    
+## part_00_shape_FL_norm                       0.227947    
+## part_00_shape_I1                            0.069528 .  
+## part_00_shape_I2                            0.589054    
+## part_00_shape_I3                            0.084296 .  
+## part_00_shape_I4                            0.008224 ** 
+## part_00_shape_I5                                  NA    
+## part_00_shape_I6                            0.048128 *  
+## part_00_shape_I1_norm                       0.882859    
+## part_00_shape_I2_norm                       0.135148    
+## part_00_shape_I3_norm                       0.104142    
+## part_00_shape_I4_norm                       0.149459    
+## part_00_shape_I5_norm                             NA    
+## part_00_shape_I6_norm                       0.076748 .  
+## part_00_shape_I1_scaled                     0.717390    
+## part_00_shape_I2_scaled                     0.440674    
+## part_00_shape_I3_scaled                     0.334822    
+## part_00_shape_I4_scaled                     0.531306    
+## part_00_shape_I5_scaled                     0.390823    
+## part_00_shape_I6_scaled                     0.463193    
+## part_00_shape_M000                                NA    
+## part_00_shape_E3_E1                         0.655478    
+## part_00_shape_E2_E1                         0.708695    
+## part_00_shape_E3_E2                         0.786486    
+## part_00_shape_sqrt_E1                       0.483033    
+## part_00_shape_sqrt_E2                       0.435410    
+## part_00_shape_sqrt_E3                       0.801432    
+## part_00_density_O3                          0.412837    
+## part_00_density_O4                          0.469458    
+## part_00_density_O5                          0.456448    
+## part_00_density_FL                          0.001010 ** 
+## part_00_density_O3_norm                     0.680170    
+## part_00_density_O4_norm                     0.630451    
+## part_00_density_O5_norm                     0.759454    
+## part_00_density_FL_norm                     0.515796    
+## part_00_density_I1                          0.060368 .  
+## part_00_density_I2                          0.250422    
+## part_00_density_I3                          0.163416    
+## part_00_density_I4                          0.000888 ***
+## part_00_density_I5                                NA    
+## part_00_density_I6                          0.095133 .  
+## part_00_density_I1_norm                     0.455185    
+## part_00_density_I2_norm                     0.046803 *  
+## part_00_density_I3_norm                     0.104621    
+## part_00_density_I4_norm                     0.978465    
+## part_00_density_I5_norm                           NA    
+## part_00_density_I6_norm                     0.229199    
+## part_00_density_I1_scaled                   0.143636    
+## part_00_density_I2_scaled                   0.119078    
+## part_00_density_I3_scaled                   0.475762    
+## part_00_density_I4_scaled                   0.892543    
+## part_00_density_I5_scaled                   0.990442    
+## part_00_density_I6_scaled                   0.185650    
+## part_00_density_M000                              NA    
+## part_00_density_E3_E1                       0.444762    
+## part_00_density_E2_E1                       0.434283    
+## part_00_density_E3_E2                       0.983965    
+## part_00_density_sqrt_E1                     0.632942    
+## part_00_density_sqrt_E2                     0.216201    
+## part_00_density_sqrt_E3                     0.903404    
+## part_01_blob_electron_sum                   0.201753    
+## part_01_blob_volume_sum                     0.332412    
+## part_01_blob_parts                          0.358946    
+## part_01_shape_O3                            0.618448    
+## part_01_shape_O4                            0.754579    
+## part_01_shape_O5                            0.837541    
+## part_01_shape_FL                            0.006338 ** 
+## part_01_shape_O3_norm                       0.194378    
+## part_01_shape_O4_norm                       0.632253    
+## part_01_shape_O5_norm                       0.832314    
+## part_01_shape_FL_norm                       0.256025    
+## part_01_shape_I1                            0.238423    
+## part_01_shape_I2                            0.751708    
+## part_01_shape_I3                            0.157670    
+## part_01_shape_I4                            0.013421 *  
+## part_01_shape_I5                                  NA    
+## part_01_shape_I6                            0.118030    
+## part_01_shape_I1_norm                       0.608516    
+## part_01_shape_I2_norm                       0.134731    
+## part_01_shape_I3_norm                       0.051966 .  
+## part_01_shape_I4_norm                       0.285806    
+## part_01_shape_I5_norm                             NA    
+## part_01_shape_I6_norm                       0.029349 *  
+## part_01_shape_I1_scaled                     0.387034    
+## part_01_shape_I2_scaled                     0.262167    
+## part_01_shape_I3_scaled                     0.919840    
+## part_01_shape_I4_scaled                     0.095830 .  
+## part_01_shape_I5_scaled                     0.051807 .  
+## part_01_shape_I6_scaled                     0.756629    
+## part_01_shape_M000                                NA    
+## part_01_shape_E3_E1                         0.210689    
+## part_01_shape_E2_E1                         0.249878    
+## part_01_shape_E3_E2                         0.827908    
+## part_01_shape_sqrt_E1                       0.674458    
+## part_01_shape_sqrt_E2                       0.343636    
+## part_01_shape_sqrt_E3                       0.931755    
+## part_01_density_O3                          0.722737    
+## part_01_density_O4                          0.786312    
+## part_01_density_O5                          0.528352    
+## part_01_density_FL                          0.001459 ** 
+## part_01_density_O3_norm                     0.764436    
+## part_01_density_O4_norm                     0.611320    
+## part_01_density_O5_norm                     0.912186    
+## part_01_density_FL_norm                     0.156460    
+## part_01_density_I1                          0.237515    
+## part_01_density_I2                          0.467707    
+## part_01_density_I3                          0.264611    
+## part_01_density_I4                          0.001925 ** 
+## part_01_density_I5                                NA    
+## part_01_density_I6                          0.212608    
+## part_01_density_I1_norm                     0.459296    
+## part_01_density_I2_norm                     0.122316    
+## part_01_density_I3_norm                     0.130848    
+## part_01_density_I4_norm                     0.114367    
+## part_01_density_I5_norm                           NA    
+## part_01_density_I6_norm                     0.085302 .  
+## part_01_density_I1_scaled                   0.724437    
+## part_01_density_I2_scaled                   0.421080    
+## part_01_density_I3_scaled                   0.176281    
+## part_01_density_I4_scaled                   0.962366    
+## part_01_density_I5_scaled                   0.614030    
+## part_01_density_I6_scaled                   0.625376    
+## part_01_density_M000                              NA    
+## part_01_density_E3_E1                       0.128998    
+## part_01_density_E2_E1                       0.123868    
+## part_01_density_E3_E2                       0.701086    
+## part_01_density_sqrt_E1                     0.347932    
+## part_01_density_sqrt_E2                     0.205673    
+## part_01_density_sqrt_E3                     0.965650    
+## part_02_blob_electron_sum                   0.528592    
+## part_02_blob_volume_sum                     0.044877 *  
+## part_02_blob_parts                          0.391055    
+## part_02_shape_O3                            0.346987    
+## part_02_shape_O4                            0.725345    
+## part_02_shape_O5                            0.611023    
+## part_02_shape_FL                            0.768458    
+## part_02_shape_O3_norm                       0.318502    
+## part_02_shape_O4_norm                       0.202596    
+## part_02_shape_O5_norm                       0.015235 *  
+## part_02_shape_FL_norm                       0.099583 .  
+## part_02_shape_I1                            0.426003    
+## part_02_shape_I2                            0.993515    
+## part_02_shape_I3                            0.682996    
+## part_02_shape_I4                            0.652367    
+## part_02_shape_I5                                  NA    
+## part_02_shape_I6                            0.595684    
+## part_02_shape_I1_norm                       0.603797    
+## part_02_shape_I2_norm                       0.458609    
+## part_02_shape_I3_norm                       0.443767    
+## part_02_shape_I4_norm                       0.088351 .  
+## part_02_shape_I5_norm                             NA    
+## part_02_shape_I6_norm                       0.536935    
+## part_02_shape_I1_scaled                     0.678573    
+## part_02_shape_I2_scaled                     0.580479    
+## part_02_shape_I3_scaled                     0.810829    
+## part_02_shape_I4_scaled                     0.095882 .  
+## part_02_shape_I5_scaled                     0.028175 *  
+## part_02_shape_I6_scaled                     0.501021    
+## part_02_shape_M000                                NA    
+## part_02_shape_E3_E1                         0.815832    
+## part_02_shape_E2_E1                         0.492895    
+## part_02_shape_E3_E2                         0.291319    
+## part_02_shape_sqrt_E1                       0.744506    
+## part_02_shape_sqrt_E2                       0.812677    
+## part_02_shape_sqrt_E3                       0.043370 *  
+## part_02_density_O3                          0.155504    
+## part_02_density_O4                          0.555136    
+## part_02_density_O5                          0.538288    
+## part_02_density_FL                          0.659552    
+## part_02_density_O3_norm                     0.874357    
+## part_02_density_O4_norm                     0.101792    
+## part_02_density_O5_norm                     0.040583 *  
+## part_02_density_FL_norm                     0.743197    
+## part_02_density_I1                          0.263689    
+## part_02_density_I2                          0.525497    
+## part_02_density_I3                          0.870618    
+## part_02_density_I4                          0.676105    
+## part_02_density_I5                                NA    
+## part_02_density_I6                          0.979656    
+## part_02_density_I1_norm                     0.867789    
+## part_02_density_I2_norm                     0.585843    
+## part_02_density_I3_norm                     0.621778    
+## part_02_density_I4_norm                     0.511995    
+## part_02_density_I5_norm                           NA    
+## part_02_density_I6_norm                     0.886184    
+## part_02_density_I1_scaled                   0.509789    
+## part_02_density_I2_scaled                   0.575241    
+## part_02_density_I3_scaled                   0.854777    
+## part_02_density_I4_scaled                   0.934363    
+## part_02_density_I5_scaled                   0.893702    
+## part_02_density_I6_scaled                   0.563656    
+## part_02_density_M000                              NA    
+## part_02_density_E3_E1                       0.749802    
+## part_02_density_E2_E1                       0.516079    
+## part_02_density_E3_E2                       0.229314    
+## part_02_density_sqrt_E1                     0.583522    
+## part_02_density_sqrt_E2                     0.836180    
+## part_02_density_sqrt_E3                     0.078905 .  
+## part_03_blob_electron_sum                   0.432091    
+## part_03_blob_volume_sum                     0.650268    
+## part_03_blob_parts                          0.746528    
+## part_03_shape_O3                            0.144189    
+## part_03_shape_O4                            0.974788    
+## part_03_shape_O5                            0.426706    
+## part_03_shape_FL                            0.173662    
+## part_03_shape_O3_norm                       0.911769    
+## part_03_shape_O4_norm                       0.643937    
+## part_03_shape_O5_norm                       0.113892    
+## part_03_shape_FL_norm                       0.267570    
+## part_03_shape_I1                            0.788485    
+## part_03_shape_I2                            0.976676    
+## part_03_shape_I3                            0.575575    
+## part_03_shape_I4                            0.402520    
+## part_03_shape_I5                                  NA    
+## part_03_shape_I6                            0.532498    
+## part_03_shape_I1_norm                       0.044149 *  
+## part_03_shape_I2_norm                       0.257401    
+## part_03_shape_I3_norm                       0.730197    
+## part_03_shape_I4_norm                       0.338812    
+## part_03_shape_I5_norm                             NA    
+## part_03_shape_I6_norm                       0.130583    
+## part_03_shape_I1_scaled                     0.682821    
+## part_03_shape_I2_scaled                     0.408168    
+## part_03_shape_I3_scaled                     0.480253    
+## part_03_shape_I4_scaled                     0.424543    
+## part_03_shape_I5_scaled                     0.428531    
+## part_03_shape_I6_scaled                     0.892784    
+## part_03_shape_M000                                NA    
+## part_03_shape_E3_E1                         0.118710    
+## part_03_shape_E2_E1                         0.495039    
+## part_03_shape_E3_E2                         0.202606    
+## part_03_shape_sqrt_E1                       0.657250    
+## part_03_shape_sqrt_E2                       0.718405    
+## part_03_shape_sqrt_E3                       0.010246 *  
+## part_03_density_O3                          0.063027 .  
+## part_03_density_O4                          0.949584    
+## part_03_density_O5                          0.201220    
+## part_03_density_FL                          0.169329    
+## part_03_density_O3_norm                     0.927550    
+## part_03_density_O4_norm                     0.807664    
+## part_03_density_O5_norm                     0.408396    
+## part_03_density_FL_norm                     0.729312    
+## part_03_density_I1                          0.775710    
+## part_03_density_I2                          0.994130    
+## part_03_density_I3                          0.325497    
+## part_03_density_I4                          0.514708    
+## part_03_density_I5                                NA    
+## part_03_density_I6                          0.298707    
+## part_03_density_I1_norm                     0.210777    
+## part_03_density_I2_norm                     0.052533 .  
+## part_03_density_I3_norm                     0.250670    
+## part_03_density_I4_norm                     0.944126    
+## part_03_density_I5_norm                           NA    
+## part_03_density_I6_norm                     0.591704    
+## part_03_density_I1_scaled                   0.844720    
+## part_03_density_I2_scaled                   0.001338 ** 
+## part_03_density_I3_scaled                   0.009778 ** 
+## part_03_density_I4_scaled                   0.231398    
+## part_03_density_I5_scaled                   0.146057    
+## part_03_density_I6_scaled                   0.210872    
+## part_03_density_M000                              NA    
+## part_03_density_E3_E1                       0.091934 .  
+## part_03_density_E2_E1                       0.471066    
+## part_03_density_E3_E2                       0.181547    
+## part_03_density_sqrt_E1                     0.740706    
+## part_03_density_sqrt_E2                     0.938419    
+## part_03_density_sqrt_E3                     0.010608 *  
+## part_04_blob_electron_sum                   0.004039 ** 
+## part_04_blob_volume_sum                     0.016386 *  
+## part_04_blob_parts                          0.583373    
+## part_04_shape_O3                            0.017310 *  
+## part_04_shape_O4                            0.116186    
+## part_04_shape_O5                            0.383086    
+## part_04_shape_FL                            0.481768    
+## part_04_shape_O3_norm                       0.000353 ***
+## part_04_shape_O4_norm                       0.006837 ** 
+## part_04_shape_O5_norm                       0.103504    
+## part_04_shape_FL_norm                       0.431318    
+## part_04_shape_I1                            0.045421 *  
+## part_04_shape_I2                            0.597330    
+## part_04_shape_I3                            0.815021    
+## part_04_shape_I4                            0.369674    
+## part_04_shape_I5                                  NA    
+## part_04_shape_I6                            0.605241    
+## part_04_shape_I1_norm                       0.756922    
+## part_04_shape_I2_norm                       0.848600    
+## part_04_shape_I3_norm                       0.375341    
+## part_04_shape_I4_norm                       0.403619    
+## part_04_shape_I5_norm                             NA    
+## part_04_shape_I6_norm                       0.868680    
+## part_04_shape_I1_scaled                     0.545298    
+## part_04_shape_I2_scaled                     0.698578    
+## part_04_shape_I3_scaled                     0.648907    
+## part_04_shape_I4_scaled                     0.267778    
+## part_04_shape_I5_scaled                     0.698778    
+## part_04_shape_I6_scaled                     0.280036    
+## part_04_shape_M000                                NA    
+## part_04_shape_E3_E1                         0.694568    
+## part_04_shape_E2_E1                         0.496093    
+## part_04_shape_E3_E2                         0.015718 *  
+## part_04_shape_sqrt_E1                       0.123850    
+## part_04_shape_sqrt_E2                       0.562962    
+## part_04_shape_sqrt_E3                       0.881495    
+## part_04_density_O3                          0.029772 *  
+## part_04_density_O4                          0.311160    
+## part_04_density_O5                          0.647535    
+## part_04_density_FL                          0.474031    
+## part_04_density_O3_norm                     0.002910 ** 
+## part_04_density_O4_norm                     0.063258 .  
+## part_04_density_O5_norm                     0.295635    
+## part_04_density_FL_norm                     0.142324    
+## part_04_density_I1                          0.094415 .  
+## part_04_density_I2                          0.709700    
+## part_04_density_I3                          0.845744    
+## part_04_density_I4                          0.493931    
+## part_04_density_I5                                NA    
+## part_04_density_I6                          0.719566    
+## part_04_density_I1_norm                     0.863958    
+## part_04_density_I2_norm                     0.627186    
+## part_04_density_I3_norm                     0.262159    
+## part_04_density_I4_norm                     0.146452    
+## part_04_density_I5_norm                           NA    
+## part_04_density_I6_norm                     0.658136    
+## part_04_density_I1_scaled                   0.610381    
+## part_04_density_I2_scaled                   0.170577    
+## part_04_density_I3_scaled                   0.195424    
+## part_04_density_I4_scaled                   0.773902    
+## part_04_density_I5_scaled                   0.508321    
+## part_04_density_I6_scaled                   0.116528    
+## part_04_density_M000                              NA    
+## part_04_density_E3_E1                       0.751802    
+## part_04_density_E2_E1                       0.352592    
+## part_04_density_E3_E2                       0.035061 *  
+## part_04_density_sqrt_E1                     0.632720    
+## part_04_density_sqrt_E2                     0.742887    
+## part_04_density_sqrt_E3                     0.853156    
+## part_05_blob_electron_sum                   0.003945 ** 
+## part_05_blob_volume_sum                     0.824576    
+## part_05_blob_parts                          0.034003 *  
+## part_05_shape_O3                            0.031453 *  
+## part_05_shape_O4                            0.452025    
+## part_05_shape_O5                            0.599986    
+## part_05_shape_FL                            0.516109    
+## part_05_shape_O3_norm                       0.028743 *  
+## part_05_shape_O4_norm                       0.223386    
+## part_05_shape_O5_norm                       0.853469    
+## part_05_shape_FL_norm                       0.741167    
+## part_05_shape_I1                            0.006204 ** 
+## part_05_shape_I2                            0.664410    
+## part_05_shape_I3                            0.299483    
+## part_05_shape_I4                            0.878341    
+## part_05_shape_I5                                  NA    
+## part_05_shape_I6                            0.159500    
+## part_05_shape_I1_norm                       0.673377    
+## part_05_shape_I2_norm                       0.967838    
+## part_05_shape_I3_norm                       0.336962    
+## part_05_shape_I4_norm                       0.948002    
+## part_05_shape_I5_norm                             NA    
+## part_05_shape_I6_norm                       0.632573    
+## part_05_shape_I1_scaled                     0.708044    
+## part_05_shape_I2_scaled                     0.559671    
+## part_05_shape_I3_scaled                     0.272568    
+## part_05_shape_I4_scaled                     0.822139    
+## part_05_shape_I5_scaled                     0.727858    
+## part_05_shape_I6_scaled                     0.688061    
+## part_05_shape_M000                                NA    
+## part_05_shape_E3_E1                         0.320537    
+## part_05_shape_E2_E1                         0.850058    
+## part_05_shape_E3_E2                         0.001382 ** 
+## part_05_shape_sqrt_E1                       0.087230 .  
+## part_05_shape_sqrt_E2                       0.542095    
+## part_05_shape_sqrt_E3                       0.604056    
+## part_05_density_O3                          0.043576 *  
+## part_05_density_O4                          0.287643    
+## part_05_density_O5                          0.543779    
+## part_05_density_FL                          0.893579    
+## part_05_density_O3_norm                     0.000424 ***
+## part_05_density_O4_norm                     0.294500    
+## part_05_density_O5_norm                     0.878325    
+## part_05_density_FL_norm                     0.295980    
+## part_05_density_I1                          0.015335 *  
+## part_05_density_I2                          0.531072    
+## part_05_density_I3                          0.056821 .  
+## part_05_density_I4                          0.527519    
+## part_05_density_I5                                NA    
+## part_05_density_I6                          0.034907 *  
+## part_05_density_I1_norm                     0.384532    
+## part_05_density_I2_norm                     0.578441    
+## part_05_density_I3_norm                     0.831431    
+## part_05_density_I4_norm                     0.385836    
+## part_05_density_I5_norm                           NA    
+## part_05_density_I6_norm                     0.668125    
+## part_05_density_I1_scaled                   0.734202    
+## part_05_density_I2_scaled                   0.675704    
+## part_05_density_I3_scaled                   0.986709    
+## part_05_density_I4_scaled                   0.943772    
+## part_05_density_I5_scaled                   0.905583    
+## part_05_density_I6_scaled                   0.748676    
+## part_05_density_M000                              NA    
+## part_05_density_E3_E1                       0.299817    
+## part_05_density_E2_E1                       0.891083    
+## part_05_density_E3_E2                       0.001456 ** 
+## part_05_density_sqrt_E1                     0.059026 .  
+## part_05_density_sqrt_E2                     0.597805    
+## part_05_density_sqrt_E3                     0.735713    
+## part_06_blob_electron_sum                   0.941676    
+## part_06_blob_volume_sum                     0.700748    
+## part_06_blob_parts                          0.481963    
+## part_06_shape_O3                            0.431598    
+## part_06_shape_O4                            0.586063    
+## part_06_shape_O5                            0.227344    
+## part_06_shape_FL                            0.816424    
+## part_06_shape_O3_norm                       0.524234    
+## part_06_shape_O4_norm                       0.484057    
+## part_06_shape_O5_norm                       0.570891    
+## part_06_shape_FL_norm                       0.644825    
+## part_06_shape_I1                            0.574911    
+## part_06_shape_I2                            0.880795    
+## part_06_shape_I3                            0.998699    
+## part_06_shape_I4                            0.819734    
+## part_06_shape_I5                                  NA    
+## part_06_shape_I6                            0.999423    
+## part_06_shape_I1_norm                       0.614946    
+## part_06_shape_I2_norm                       0.638318    
+## part_06_shape_I3_norm                       0.929453    
+## part_06_shape_I4_norm                       0.756698    
+## part_06_shape_I5_norm                             NA    
+## part_06_shape_I6_norm                       0.772575    
+## part_06_shape_I1_scaled                     0.585066    
+## part_06_shape_I2_scaled                     0.801520    
+## part_06_shape_I3_scaled                     0.774404    
+## part_06_shape_I4_scaled                     0.550223    
+## part_06_shape_I5_scaled                     0.576427    
+## part_06_shape_I6_scaled                     0.750899    
+## part_06_shape_M000                                NA    
+## part_06_shape_E3_E1                         0.976879    
+## part_06_shape_E2_E1                         0.575295    
+## part_06_shape_E3_E2                         0.387205    
+## part_06_shape_sqrt_E1                       0.999689    
+## part_06_shape_sqrt_E2                       0.509268    
+## part_06_shape_sqrt_E3                       0.424951    
+## part_06_density_O3                          0.715478    
+## part_06_density_O4                          0.555596    
+## part_06_density_O5                          0.382146    
+## part_06_density_FL                          0.621232    
+## part_06_density_O3_norm                     0.554194    
+## part_06_density_O4_norm                     0.432173    
+## part_06_density_O5_norm                     0.893629    
+## part_06_density_FL_norm                     0.538506    
+## part_06_density_I1                          0.615814    
+## part_06_density_I2                          0.948215    
+## part_06_density_I3                          0.624585    
+## part_06_density_I4                          0.566923    
+## part_06_density_I5                                NA    
+## part_06_density_I6                          0.636114    
+## part_06_density_I1_norm                     0.977404    
+## part_06_density_I2_norm                     0.821995    
+## part_06_density_I3_norm                     0.747087    
+## part_06_density_I4_norm                     0.548504    
+## part_06_density_I5_norm                           NA    
+## part_06_density_I6_norm                     0.773604    
+## part_06_density_I1_scaled                   0.988322    
+## part_06_density_I2_scaled                   0.691148    
+## part_06_density_I3_scaled                   0.823254    
+## part_06_density_I4_scaled                   0.516058    
+## part_06_density_I5_scaled                   0.461507    
+## part_06_density_I6_scaled                   0.930168    
+## part_06_density_M000                              NA    
+## part_06_density_E3_E1                       0.971681    
+## part_06_density_E2_E1                       0.429812    
+## part_06_density_E3_E2                       0.349707    
+## part_06_density_sqrt_E1                     0.845110    
+## part_06_density_sqrt_E2                     0.653249    
+## part_06_density_sqrt_E3                     0.368195    
+## part_07_blob_electron_sum                   0.591549    
+## part_07_blob_volume_sum                     0.285839    
+## part_07_blob_parts                          0.117383    
+## part_07_shape_O3                            0.259283    
+## part_07_shape_O4                            0.720325    
+## part_07_shape_O5                            0.720648    
+## part_07_shape_FL                            0.469545    
+## part_07_shape_O3_norm                       0.957364    
+## part_07_shape_O4_norm                       0.300451    
+## part_07_shape_O5_norm                       0.572516    
+## part_07_shape_FL_norm                       0.201797    
+## part_07_shape_I1                            0.927312    
+## part_07_shape_I2                            0.498926    
+## part_07_shape_I3                            0.620082    
+## part_07_shape_I4                            0.523061    
+## part_07_shape_I5                                  NA    
+## part_07_shape_I6                            0.802331    
+## part_07_shape_I1_norm                       0.474897    
+## part_07_shape_I2_norm                       0.670045    
+## part_07_shape_I3_norm                       0.719884    
+## part_07_shape_I4_norm                       0.154513    
+## part_07_shape_I5_norm                             NA    
+## part_07_shape_I6_norm                       0.515595    
+## part_07_shape_I1_scaled                     0.406743    
+## part_07_shape_I2_scaled                     0.635801    
+## part_07_shape_I3_scaled                     0.945628    
+## part_07_shape_I4_scaled                     0.850667    
+## part_07_shape_I5_scaled                     0.583952    
+## part_07_shape_I6_scaled                     0.525650    
+## part_07_shape_M000                                NA    
+## part_07_shape_E3_E1                         0.523008    
+## part_07_shape_E2_E1                         0.827960    
+## part_07_shape_E3_E2                         0.033424 *  
+## part_07_shape_sqrt_E1                       0.915086    
+## part_07_shape_sqrt_E2                       0.362730    
+## part_07_shape_sqrt_E3                       0.969825    
+## part_07_density_O3                          0.794016    
+## part_07_density_O4                          0.827430    
+## part_07_density_O5                          0.643781    
+## part_07_density_FL                          0.405193    
+## part_07_density_O3_norm                     0.911213    
+## part_07_density_O4_norm                     0.565301    
+## part_07_density_O5_norm                     0.699679    
+## part_07_density_FL_norm                     0.037499 *  
+## part_07_density_I1                          0.783956    
+## part_07_density_I2                          0.948795    
+## part_07_density_I3                          0.840932    
+## part_07_density_I4                          0.618960    
+## part_07_density_I5                                NA    
+## part_07_density_I6                          0.933555    
+## part_07_density_I1_norm                     0.738498    
+## part_07_density_I2_norm                     0.636729    
+## part_07_density_I3_norm                     0.595888    
+## part_07_density_I4_norm                     0.032024 *  
+## part_07_density_I5_norm                           NA    
+## part_07_density_I6_norm                     0.281029    
+## part_07_density_I1_scaled                   0.809540    
+## part_07_density_I2_scaled                   0.365029    
+## part_07_density_I3_scaled                   0.427584    
+## part_07_density_I4_scaled                   0.177649    
+## part_07_density_I5_scaled                   0.093468 .  
+## part_07_density_I6_scaled                   0.626523    
+## part_07_density_M000                              NA    
+## part_07_density_E3_E1                       0.475744    
+## part_07_density_E2_E1                       0.880238    
+## part_07_density_E3_E2                       0.031003 *  
+## part_07_density_sqrt_E1                     0.864846    
+## part_07_density_sqrt_E2                     0.255931    
+## part_07_density_sqrt_E3                     0.989943    
+## part_08_blob_electron_sum                   0.655520    
+## part_08_blob_volume_sum                     0.922171    
+## part_08_blob_parts                          0.459146    
+## part_08_shape_O3                            0.146786    
+## part_08_shape_O4                            0.561266    
+## part_08_shape_O5                            0.800626    
+## part_08_shape_FL                            0.404413    
+## part_08_shape_O3_norm                       0.934158    
+## part_08_shape_O4_norm                       0.250763    
+## part_08_shape_O5_norm                       0.644203    
+## part_08_shape_FL_norm                       0.671450    
+## part_08_shape_I1                            0.568092    
+## part_08_shape_I2                            0.950877    
+## part_08_shape_I3                            0.575651    
+## part_08_shape_I4                            0.449548    
+## part_08_shape_I5                                  NA    
+## part_08_shape_I6                            0.852596    
+## part_08_shape_I1_norm                       0.851364    
+## part_08_shape_I2_norm                       0.908967    
+## part_08_shape_I3_norm                       0.974079    
+## part_08_shape_I4_norm                       0.647101    
+## part_08_shape_I5_norm                             NA    
+## part_08_shape_I6_norm                       0.827962    
+## part_08_shape_I1_scaled                     0.944978    
+## part_08_shape_I2_scaled                     0.632955    
+## part_08_shape_I3_scaled                     0.702149    
+## part_08_shape_I4_scaled                     0.973379    
+## part_08_shape_I5_scaled                     0.941947    
+## part_08_shape_I6_scaled                     0.981481    
+## part_08_shape_M000                                NA    
+## part_08_shape_E3_E1                         0.688246    
+## part_08_shape_E2_E1                         0.985495    
+## part_08_shape_E3_E2                         0.569562    
+## part_08_shape_sqrt_E1                       0.466677    
+## part_08_shape_sqrt_E2                       0.487133    
+## part_08_shape_sqrt_E3                       0.286745    
+## part_08_density_O3                          0.235229    
+## part_08_density_O4                          0.451529    
+## part_08_density_O5                          0.828301    
+## part_08_density_FL                          0.516199    
+## part_08_density_O3_norm                     0.958255    
+## part_08_density_O4_norm                     0.503567    
+## part_08_density_O5_norm                     0.879830    
+## part_08_density_FL_norm                     0.679525    
+## part_08_density_I1                          0.930215    
+## part_08_density_I2                          0.748402    
+## part_08_density_I3                          0.990511    
+## part_08_density_I4                          0.519322    
+## part_08_density_I5                                NA    
+## part_08_density_I6                          0.669464    
+## part_08_density_I1_norm                     0.979408    
+## part_08_density_I2_norm                     0.912448    
+## part_08_density_I3_norm                     0.518780    
+## part_08_density_I4_norm                     0.889881    
+## part_08_density_I5_norm                           NA    
+## part_08_density_I6_norm                     0.582443    
+## part_08_density_I1_scaled                   0.836132    
+## part_08_density_I2_scaled                   0.622546    
+## part_08_density_I3_scaled                   0.674464    
+## part_08_density_I4_scaled                   0.960104    
+## part_08_density_I5_scaled                   0.767979    
+## part_08_density_I6_scaled                   0.445739    
+## part_08_density_M000                              NA    
+## part_08_density_E3_E1                       0.810030    
+## part_08_density_E2_E1                       0.841308    
+## part_08_density_E3_E2                       0.526931    
+## part_08_density_sqrt_E1                     0.438014    
+## part_08_density_sqrt_E2                     0.623116    
+## part_08_density_sqrt_E3                     0.316061    
+## part_09_blob_electron_sum                   0.780504    
+## part_09_blob_volume_sum                     0.278143    
+## part_09_blob_parts                          0.017815 *  
+## part_09_shape_O3                            0.797447    
+## part_09_shape_O4                            0.538603    
+## part_09_shape_O5                            0.291389    
+## part_09_shape_FL                            0.485596    
+## part_09_shape_O3_norm                       0.942686    
+## part_09_shape_O4_norm                       0.343550    
+## part_09_shape_O5_norm                       0.713167    
+## part_09_shape_FL_norm                       0.615764    
+## part_09_shape_I1                            0.442940    
+## part_09_shape_I2                            0.330321    
+## part_09_shape_I3                            0.986471    
+## part_09_shape_I4                            0.497455    
+## part_09_shape_I5                                  NA    
+## part_09_shape_I6                            0.469164    
+## part_09_shape_I1_norm                       0.416088    
+## part_09_shape_I2_norm                       0.919419    
+## part_09_shape_I3_norm                       0.709974    
+## part_09_shape_I4_norm                       0.214442    
+## part_09_shape_I5_norm                             NA    
+## part_09_shape_I6_norm                       0.343957    
+## part_09_shape_I1_scaled                     0.977934    
+## part_09_shape_I2_scaled                     0.633018    
+## part_09_shape_I3_scaled                     0.631027    
+## part_09_shape_I4_scaled                     0.908348    
+## part_09_shape_I5_scaled                     0.418255    
+## part_09_shape_I6_scaled                     0.748966    
+## part_09_shape_M000                                NA    
+## part_09_shape_E3_E1                         0.025031 *  
+## part_09_shape_E2_E1                         0.255319    
+## part_09_shape_E3_E2                         0.121602    
+## part_09_shape_sqrt_E1                       0.833477    
+## part_09_shape_sqrt_E2                       0.347094    
+## part_09_shape_sqrt_E3                       0.014931 *  
+## part_09_density_O3                          0.462182    
+## part_09_density_O4                          0.341926    
+## part_09_density_O5                          0.189369    
+## part_09_density_FL                          0.773982    
+## part_09_density_O3_norm                     0.522111    
+## part_09_density_O4_norm                     0.039810 *  
+## part_09_density_O5_norm                     0.468416    
+## part_09_density_FL_norm                     0.537401    
+## part_09_density_I1                          0.388955    
+## part_09_density_I2                          0.517310    
+## part_09_density_I3                          0.867131    
+## part_09_density_I4                          0.798946    
+## part_09_density_I5                                NA    
+## part_09_density_I6                          0.411059    
+## part_09_density_I1_norm                     0.095206 .  
+## part_09_density_I2_norm                     0.974181    
+## part_09_density_I3_norm                     0.874858    
+## part_09_density_I4_norm                     0.451281    
+## part_09_density_I5_norm                           NA    
+## part_09_density_I6_norm                     0.314925    
+## part_09_density_I1_scaled                   0.354770    
+## part_09_density_I2_scaled                   0.944533    
+## part_09_density_I3_scaled                   0.621597    
+## part_09_density_I4_scaled                   0.955959    
+## part_09_density_I5_scaled                   0.822047    
+## part_09_density_I6_scaled                   0.755797    
+## part_09_density_M000                              NA    
+## part_09_density_E3_E1                       0.026174 *  
+## part_09_density_E2_E1                       0.278250    
+## part_09_density_E3_E2                       0.108409    
+## part_09_density_sqrt_E1                     0.979395    
+## part_09_density_sqrt_E2                     0.240632    
+## part_09_density_sqrt_E3                     0.007130 ** 
+## local_volume                                0.757170    
+## local_electrons                             0.621345    
+## local_mean                                  0.343460    
+## local_std                                   0.500353    
+## local_min                                         NA    
+## local_max                                   0.474940    
+## local_skewness                              0.631217    
+## local_parts                                       NA    
+## weight_col                                        NA    
+## grid_space                                        NA    
+## solvent_radius                                    NA    
+## solvent_opening_radius                            NA    
+## resolution_max_limit                              NA    
+## resolution                                  0.049606 *  
+## TwoFoFc_mean                                1.85e-05 ***
+## TwoFoFc_std                                  < 2e-16 ***
+## TwoFoFc_square_std                          4.63e-11 ***
+## TwoFoFc_min                                 0.811361    
+## TwoFoFc_max                                 4.24e-09 ***
+## Fo_mean                                     0.727301    
+## Fo_std                                      0.001288 ** 
+## Fo_square_std                               0.017264 *  
+## Fo_min                                      2.85e-08 ***
+## Fo_max                                      6.61e-09 ***
+## FoFc_mean                                   1.87e-05 ***
+## FoFc_std                                     < 2e-16 ***
+## FoFc_square_std                             0.001130 ** 
+## FoFc_min                                    4.03e-06 ***
+## FoFc_max                                     < 2e-16 ***
+## Fc_mean                                     1.79e-05 ***
+## Fc_std                                      3.24e-15 ***
+## Fc_square_std                               0.002220 ** 
+## Fc_min                                      7.40e-12 ***
+## Fc_max                                       < 2e-16 ***
+## solvent_mask_count                          2.13e-05 ***
+## void_mask_count                             0.157733    
+## modeled_mask_count                          0.158162    
+## solvent_ratio                               0.128258    
+## TwoFoFc_bulk_mean                           0.001300 ** 
+## TwoFoFc_bulk_std                            0.002253 ** 
+## TwoFoFc_void_mean                           0.020410 *  
+## TwoFoFc_void_std                            9.97e-07 ***
+## TwoFoFc_modeled_mean                         < 2e-16 ***
+## TwoFoFc_modeled_std                         3.71e-11 ***
+## Fo_bulk_mean                                0.839352    
+## Fo_bulk_std                                 0.806927    
+## Fo_void_mean                                0.214839    
+## Fo_void_std                                 0.336952    
+## Fo_modeled_mean                             0.002502 ** 
+## Fo_modeled_std                              4.55e-06 ***
+## FoFc_bulk_mean                              0.001300 ** 
+## FoFc_bulk_std                               0.003677 ** 
+## FoFc_void_mean                              0.020416 *  
+## FoFc_void_std                               0.011162 *  
+## FoFc_modeled_mean                            < 2e-16 ***
+## FoFc_modeled_std                             < 2e-16 ***
+## Fc_bulk_mean                                0.001300 ** 
+## Fc_bulk_std                                 0.012231 *  
+## Fc_void_mean                                0.020416 *  
+## Fc_void_std                                 7.12e-10 ***
+## Fc_modeled_mean                              < 2e-16 ***
+## Fc_modeled_std                              2.02e-15 ***
+## TwoFoFc_void_fit_binormal_mean1             0.764730    
+## TwoFoFc_void_fit_binormal_std1              0.039167 *  
+## TwoFoFc_void_fit_binormal_mean2             0.142610    
+## TwoFoFc_void_fit_binormal_std2                    NA    
+## TwoFoFc_void_fit_binormal_scale             0.154486    
+## TwoFoFc_solvent_fit_normal_mean             0.018345 *  
+## TwoFoFc_solvent_fit_normal_std              0.010438 *  
+## part_step_FoFc_std_min                            NA    
+## part_step_FoFc_std_max                            NA    
+## part_step_FoFc_std_step                           NA    
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 0.5672 on 39321 degrees of freedom
+## Multiple R-squared:      1,	Adjusted R-squared:      1 
+## F-statistic: 1.838e+06 on 705 and 39321 DF,  p-value: < 2.2e-16
+```
+
+```r
+#head(Tab4$local_res_atom_non_h_electron_sum)
+#head(Tab13)
+#head(rmse(Tab4$local_res_atom_non_h_electron_sum, as.numeric(Tab13), na.rm=TRUE))
+```
+
+Atomy
+
+```r
+Tab13 <- Tab4
+Tab13[is.na(Tab4)] <- 0
+```
+
+```
+## Warning in `[<-.factor`(`*tmp*`, thisvar, value = 0): invalid factor level,
+## NA generated
+```
+
+```r
+Tab13 <- Tab13[sapply(Tab13, is.numeric)]
+Tablm <- lm(local_res_atom_non_h_count ~ ., Tab13) #adds regression line to plot
+#squared sigma
+summary(Tablm)
+```
+
+```
+## 
+## Call:
+## lm(formula = local_res_atom_non_h_count ~ ., data = Tab13)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -1.47235 -0.00798  0.00110  0.01065  1.67693 
+## 
+## Coefficients: (82 not defined because of singularities)
+##                                               Estimate Std. Error  t value
+## (Intercept)                                  8.705e-02  6.389e-03   13.626
+## local_BAa                                           NA         NA       NA
+## local_NPa                                           NA         NA       NA
+## local_Ra                                            NA         NA       NA
+## local_RGa                                           NA         NA       NA
+## local_SRGa                                          NA         NA       NA
+## local_CCSa                                          NA         NA       NA
+## local_CCPa                                          NA         NA       NA
+## local_ZOa                                           NA         NA       NA
+## local_ZDa                                           NA         NA       NA
+## local_ZD_minus_a                                    NA         NA       NA
+## local_ZD_plus_a                                     NA         NA       NA
+## local_res_atom_count                         1.008e-03  2.126e-04    4.740
+## local_res_atom_non_h_occupancy_sum           4.051e-03  5.283e-04    7.668
+## local_res_atom_non_h_electron_sum            7.617e-02  1.976e-04  385.453
+## local_res_atom_non_h_electron_occupancy_sum -4.519e-04  7.137e-05   -6.332
+## local_res_atom_C_count                       5.399e-01  1.202e-03  449.270
+## local_res_atom_N_count                       4.310e-01  2.417e-03  178.353
+## local_res_atom_O_count                       3.837e-01  1.783e-03  215.226
+## local_res_atom_S_count                      -1.860e-01  6.489e-03  -28.666
+## dict_atom_non_h_count                        9.776e-01  7.325e-04 1334.711
+## dict_atom_non_h_electron_sum                -7.504e-02  1.988e-04 -377.496
+## dict_atom_C_count                           -5.268e-01  1.218e-03 -432.501
+## dict_atom_N_count                           -4.171e-01  2.412e-03 -172.920
+## dict_atom_O_count                           -3.708e-01  1.754e-03 -211.412
+## dict_atom_S_count                            1.933e-01  6.471e-03   29.864
+## part_00_blob_electron_sum                   -4.620e+00  2.206e+01   -0.209
+## part_00_blob_volume_sum                      2.358e-04  7.410e-04    0.318
+## part_00_blob_parts                           4.581e-03  4.980e-03    0.920
+## part_00_shape_O3                            -4.072e-10  1.303e-08   -0.031
+## part_00_shape_O4                            -5.409e-16  1.171e-15   -0.462
+## part_00_shape_O5                             7.644e-23  2.330e-22    0.328
+## part_00_shape_FL                            -1.458e-18  5.387e-19   -2.706
+## part_00_shape_O3_norm                        1.797e-02  5.520e-02    0.325
+## part_00_shape_O4_norm                       -1.160e-02  1.468e-01   -0.079
+## part_00_shape_O5_norm                        5.474e-01  1.406e+00    0.389
+## part_00_shape_FL_norm                       -3.303e-02  5.156e-02   -0.641
+## part_00_shape_I1                            -9.328e-12  7.012e-12   -1.330
+## part_00_shape_I2                             1.290e-22  1.285e-22    1.004
+## part_00_shape_I3                            -1.158e-22  6.551e-23   -1.767
+## part_00_shape_I4                             2.504e-18  9.074e-19    2.759
+## part_00_shape_I5                                    NA         NA       NA
+## part_00_shape_I6                             4.543e-19  2.581e-19    1.760
+## part_00_shape_I1_norm                       -1.269e-02  2.132e-02   -0.595
+## part_00_shape_I2_norm                       -8.937e-03  1.238e-02   -0.722
+## part_00_shape_I3_norm                        1.660e-03  2.020e-03    0.822
+## part_00_shape_I4_norm                        6.385e-02  7.247e-02    0.881
+## part_00_shape_I5_norm                               NA         NA       NA
+## part_00_shape_I6_norm                       -1.076e-02  1.186e-02   -0.907
+## part_00_shape_I1_scaled                      2.294e+00  2.769e+00    0.829
+## part_00_shape_I2_scaled                      1.324e+02  3.568e+02    0.371
+## part_00_shape_I3_scaled                      1.013e+01  4.281e+01    0.237
+## part_00_shape_I4_scaled                      3.828e+01  1.758e+02    0.218
+## part_00_shape_I5_scaled                     -6.878e+01  1.761e+02   -0.391
+## part_00_shape_I6_scaled                     -7.156e+03  1.930e+04   -0.371
+## part_00_shape_M000                                  NA         NA       NA
+## part_00_shape_E3_E1                          1.565e-02  7.308e-02    0.214
+## part_00_shape_E2_E1                         -1.086e-03  4.354e-02   -0.025
+## part_00_shape_E3_E2                          2.229e-04  4.468e-02    0.005
+## part_00_shape_sqrt_E1                       -4.170e-03  5.484e-03   -0.760
+## part_00_shape_sqrt_E2                        2.420e-03  9.745e-03    0.248
+## part_00_shape_sqrt_E3                       -3.833e-03  1.698e-02   -0.226
+## part_00_density_O3                          -1.102e-08  2.625e-08   -0.420
+## part_00_density_O4                           4.903e-15  4.791e-15    1.023
+## part_00_density_O5                          -1.013e-21  1.311e-21   -0.773
+## part_00_density_FL                           9.229e-18  3.072e-18    3.004
+## part_00_density_O3_norm                     -2.187e-02  2.142e-02   -1.021
+## part_00_density_O4_norm                      5.771e-02  4.607e-02    1.253
+## part_00_density_O5_norm                     -2.047e-01  2.511e-01   -0.815
+## part_00_density_FL_norm                     -6.142e-03  7.119e-03   -0.863
+## part_00_density_I1                           2.841e-11  1.616e-11    1.758
+## part_00_density_I2                          -1.091e-21  8.043e-22   -1.356
+## part_00_density_I3                           7.190e-22  4.277e-22    1.681
+## part_00_density_I4                          -1.580e-17  4.904e-18   -3.223
+## part_00_density_I5                                  NA         NA       NA
+## part_00_density_I6                          -2.756e-18  1.486e-18   -1.854
+## part_00_density_I1_norm                      5.595e-03  5.831e-03    0.959
+## part_00_density_I2_norm                      9.510e-04  8.149e-04    1.167
+## part_00_density_I3_norm                     -1.730e-04  1.434e-04   -1.207
+## part_00_density_I4_norm                      2.425e-03  8.353e-03    0.290
+## part_00_density_I5_norm                             NA         NA       NA
+## part_00_density_I6_norm                      1.605e-03  1.705e-03    0.941
+## part_00_density_I1_scaled                   -3.670e-01  3.002e-01   -1.223
+## part_00_density_I2_scaled                   -3.592e+00  4.052e+00   -0.887
+## part_00_density_I3_scaled                   -1.017e-01  4.702e-01   -0.216
+## part_00_density_I4_scaled                    1.801e+00  8.062e+00    0.223
+## part_00_density_I5_scaled                   -9.393e-01  7.640e+00   -0.123
+## part_00_density_I6_scaled                    1.154e+02  1.811e+02    0.637
+## part_00_density_M000                                NA         NA       NA
+## part_00_density_E3_E1                       -3.835e-02  7.494e-02   -0.512
+## part_00_density_E2_E1                        1.952e-02  4.478e-02    0.436
+## part_00_density_E3_E2                        1.530e-02  4.576e-02    0.334
+## part_00_density_sqrt_E1                      4.108e-03  5.640e-03    0.728
+## part_00_density_sqrt_E2                     -6.926e-03  1.034e-02   -0.670
+## part_00_density_sqrt_E3                      1.879e-03  1.854e-02    0.101
+## part_01_blob_electron_sum                   -7.437e-04  9.981e-04   -0.745
+## part_01_blob_volume_sum                     -3.244e-04  1.051e-03   -0.309
+## part_01_blob_parts                          -4.137e-03  2.112e-03   -1.959
+## part_01_shape_O3                             4.501e-09  1.718e-08    0.262
+## part_01_shape_O4                             5.262e-16  1.873e-15    0.281
+## part_01_shape_O5                            -7.896e-23  4.349e-22   -0.182
+## part_01_shape_FL                             2.101e-18  8.723e-19    2.408
+## part_01_shape_O3_norm                        5.831e-02  5.792e-02    1.007
+## part_01_shape_O4_norm                       -9.344e-02  1.452e-01   -0.643
+## part_01_shape_O5_norm                        6.820e-01  1.321e+00    0.516
+## part_01_shape_FL_norm                        3.129e-02  4.614e-02    0.678
+## part_01_shape_I1                             7.714e-12  9.119e-12    0.846
+## part_01_shape_I2                            -1.513e-22  1.952e-22   -0.775
+## part_01_shape_I3                             1.541e-22  1.009e-22    1.528
+## part_01_shape_I4                            -3.476e-18  1.360e-18   -2.555
+## part_01_shape_I5                                    NA         NA       NA
+## part_01_shape_I6                            -5.919e-19  4.032e-19   -1.468
+## part_01_shape_I1_norm                        3.249e-03  2.020e-02    0.161
+## part_01_shape_I2_norm                        6.948e-03  9.919e-03    0.701
+## part_01_shape_I3_norm                       -1.279e-03  1.512e-03   -0.845
+## part_01_shape_I4_norm                       -5.055e-02  6.482e-02   -0.780
+## part_01_shape_I5_norm                               NA         NA       NA
+## part_01_shape_I6_norm                        9.383e-03  9.669e-03    0.970
+## part_01_shape_I1_scaled                     -2.478e+00  2.490e+00   -0.995
+## part_01_shape_I2_scaled                     -8.376e+01  2.066e+02   -0.405
+## part_01_shape_I3_scaled                      1.889e+00  2.230e+01    0.085
+## part_01_shape_I4_scaled                     -1.013e+02  1.342e+02   -0.754
+## part_01_shape_I5_scaled                      1.408e+02  1.372e+02    1.026
+## part_01_shape_I6_scaled                      7.900e+02  1.150e+04    0.069
+## part_01_shape_M000                                  NA         NA       NA
+## part_01_shape_E3_E1                         -6.936e-02  8.782e-02   -0.790
+## part_01_shape_E2_E1                          2.287e-02  5.158e-02    0.443
+## part_01_shape_E3_E2                          1.984e-02  5.362e-02    0.370
+## part_01_shape_sqrt_E1                        1.840e-03  6.403e-03    0.287
+## part_01_shape_sqrt_E2                       -1.239e-03  1.160e-02   -0.107
+## part_01_shape_sqrt_E3                       -7.460e-03  2.065e-02   -0.361
+## part_01_density_O3                          -8.614e-10  3.175e-08   -0.027
+## part_01_density_O4                          -4.579e-15  6.693e-15   -0.684
+## part_01_density_O5                           1.529e-21  2.127e-21    0.719
+## part_01_density_FL                          -1.185e-17  4.133e-18   -2.866
+## part_01_density_O3_norm                     -9.462e-04  2.300e-02   -0.041
+## part_01_density_O4_norm                     -2.633e-02  4.737e-02   -0.556
+## part_01_density_O5_norm                     -1.306e-02  2.442e-01   -0.053
+## part_01_density_FL_norm                      7.199e-03  7.274e-03    0.990
+## part_01_density_I1                          -2.382e-11  1.967e-11   -1.211
+## part_01_density_I2                           1.078e-21  1.050e-21    1.027
+## part_01_density_I3                          -8.389e-22  5.577e-22   -1.504
+## part_01_density_I4                           1.956e-17  6.366e-18    3.073
+## part_01_density_I5                                  NA         NA       NA
+## part_01_density_I6                           3.136e-18  2.009e-18    1.561
+## part_01_density_I1_norm                      2.595e-04  5.877e-03    0.044
+## part_01_density_I2_norm                     -6.334e-04  7.443e-04   -0.851
+## part_01_density_I3_norm                      1.032e-04  1.073e-04    0.962
+## part_01_density_I4_norm                     -6.572e-03  8.708e-03   -0.755
+## part_01_density_I5_norm                             NA         NA       NA
+## part_01_density_I6_norm                     -1.593e-03  1.450e-03   -1.098
+## part_01_density_I1_scaled                    3.786e-02  3.112e-01    0.122
+## part_01_density_I2_scaled                    9.516e-01  3.310e+00    0.288
+## part_01_density_I3_scaled                    2.439e-01  3.451e-01    0.707
+## part_01_density_I4_scaled                   -1.547e-01  7.378e+00   -0.021
+## part_01_density_I5_scaled                    8.066e-01  7.331e+00    0.110
+## part_01_density_I6_scaled                   -2.994e-01  1.270e+02   -0.002
+## part_01_density_M000                                NA         NA       NA
+## part_01_density_E3_E1                        9.373e-02  9.004e-02    1.041
+## part_01_density_E2_E1                       -4.097e-02  5.305e-02   -0.772
+## part_01_density_E3_E2                       -2.796e-02  5.490e-02   -0.509
+## part_01_density_sqrt_E1                     -3.940e-03  6.613e-03   -0.596
+## part_01_density_sqrt_E2                      5.918e-03  1.224e-02    0.483
+## part_01_density_sqrt_E3                      7.533e-03  2.238e-02    0.337
+## part_02_blob_electron_sum                    3.711e-04  5.946e-04    0.624
+## part_02_blob_volume_sum                      1.421e-03  7.376e-04    1.926
+## part_02_blob_parts                           1.595e-03  1.568e-03    1.017
+## part_02_shape_O3                            -7.071e-09  1.115e-08   -0.634
+## part_02_shape_O4                            -7.988e-16  1.632e-15   -0.490
+## part_02_shape_O5                            -1.960e-22  4.438e-22   -0.442
+## part_02_shape_FL                             3.227e-20  9.555e-19    0.034
+## part_02_shape_O3_norm                        8.011e-03  3.630e-02    0.221
+## part_02_shape_O4_norm                        3.061e-03  6.998e-02    0.044
+## part_02_shape_O5_norm                        7.796e-01  6.029e-01    1.293
+## part_02_shape_FL_norm                       -2.459e-02  1.803e-02   -1.364
+## part_02_shape_I1                             2.055e-12  5.415e-12    0.379
+## part_02_shape_I2                             6.118e-23  1.793e-22    0.341
+## part_02_shape_I3                            -4.069e-23  1.055e-22   -0.386
+## part_02_shape_I4                             5.297e-19  1.304e-18    0.406
+## part_02_shape_I5                                    NA         NA       NA
+## part_02_shape_I6                             1.696e-19  3.469e-19    0.489
+## part_02_shape_I1_norm                       -7.905e-03  9.406e-03   -0.840
+## part_02_shape_I2_norm                       -4.000e-04  2.851e-03   -0.140
+## part_02_shape_I3_norm                        2.390e-04  4.784e-04    0.499
+## part_02_shape_I4_norm                        3.293e-02  2.138e-02    1.540
+## part_02_shape_I5_norm                               NA         NA       NA
+## part_02_shape_I6_norm                       -1.008e-03  3.525e-03   -0.286
+## part_02_shape_I1_scaled                      1.543e+00  1.408e+00    1.096
+## part_02_shape_I2_scaled                      2.328e+01  9.334e+01    0.249
+## part_02_shape_I3_scaled                     -1.239e+00  1.267e+01   -0.098
+## part_02_shape_I4_scaled                      6.226e+01  7.668e+01    0.812
+## part_02_shape_I5_scaled                     -9.492e+01  7.265e+01   -1.307
+## part_02_shape_I6_scaled                     -4.716e+03  8.053e+03   -0.586
+## part_02_shape_M000                                  NA         NA       NA
+## part_02_shape_E3_E1                         -1.245e-02  7.097e-02   -0.175
+## part_02_shape_E2_E1                          4.150e-03  4.381e-02    0.095
+## part_02_shape_E3_E2                         -7.962e-02  4.395e-02   -1.812
+## part_02_shape_sqrt_E1                       -1.491e-04  4.693e-03   -0.032
+## part_02_shape_sqrt_E2                       -9.525e-03  8.100e-03   -1.176
+## part_02_shape_sqrt_E3                       -1.390e-02  1.491e-02   -0.933
+## part_02_density_O3                           1.536e-08  1.773e-08    0.866
+## part_02_density_O4                          -1.939e-15  4.489e-15   -0.432
+## part_02_density_O5                           1.042e-21  2.140e-21    0.487
+## part_02_density_FL                           6.322e-19  2.453e-18    0.258
+## part_02_density_O3_norm                      6.455e-03  1.592e-02    0.406
+## part_02_density_O4_norm                      2.164e-02  2.869e-02    0.754
+## part_02_density_O5_norm                     -2.203e-01  1.783e-01   -1.236
+## part_02_density_FL_norm                     -1.612e-04  3.963e-03   -0.041
+## part_02_density_I1                          -5.125e-12  9.959e-12   -0.515
+## part_02_density_I2                           2.342e-22  6.016e-22    0.389
+## part_02_density_I3                          -4.849e-24  2.934e-22   -0.017
+## part_02_density_I4                          -2.006e-18  3.683e-18   -0.545
+## part_02_density_I5                                  NA         NA       NA
+## part_02_density_I6                           1.217e-20  1.036e-18    0.012
+## part_02_density_I1_norm                      1.684e-03  3.315e-03    0.508
+## part_02_density_I2_norm                     -4.855e-05  2.269e-04   -0.214
+## part_02_density_I3_norm                     -1.452e-05  3.347e-05   -0.434
+## part_02_density_I4_norm                      4.559e-04  3.997e-03    0.114
+## part_02_density_I5_norm                             NA         NA       NA
+## part_02_density_I6_norm                     -1.699e-04  6.430e-04   -0.264
+## part_02_density_I1_scaled                   -1.306e-01  2.233e-01   -0.585
+## part_02_density_I2_scaled                   -3.428e-02  1.249e+00   -0.027
+## part_02_density_I3_scaled                    1.644e-01  3.717e-01    0.442
+## part_02_density_I4_scaled                    2.049e-01  6.015e+00    0.034
+## part_02_density_I5_scaled                    2.822e-01  5.488e+00    0.051
+## part_02_density_I6_scaled                   -3.144e+01  1.183e+02   -0.266
+## part_02_density_M000                                NA         NA       NA
+## part_02_density_E3_E1                        1.408e-02  7.191e-02    0.196
+## part_02_density_E2_E1                       -1.622e-03  4.446e-02   -0.036
+## part_02_density_E3_E2                        8.737e-02  4.454e-02    1.962
+## part_02_density_sqrt_E1                     -3.172e-03  4.835e-03   -0.656
+## part_02_density_sqrt_E2                      6.329e-03  8.374e-03    0.756
+## part_02_density_sqrt_E3                      1.066e-02  1.574e-02    0.677
+## part_03_blob_electron_sum                   -2.865e-04  5.235e-04   -0.547
+## part_03_blob_volume_sum                     -3.526e-04  7.889e-04   -0.447
+## part_03_blob_parts                           3.592e-04  1.663e-03    0.216
+## part_03_shape_O3                             1.024e-08  1.294e-08    0.791
+## part_03_shape_O4                             5.041e-16  2.480e-15    0.203
+## part_03_shape_O5                             6.606e-22  1.049e-21    0.630
+## part_03_shape_FL                            -1.571e-18  1.381e-18   -1.138
+## part_03_shape_O3_norm                        9.995e-03  3.374e-02    0.296
+## part_03_shape_O4_norm                        1.786e-02  6.015e-02    0.297
+## part_03_shape_O5_norm                       -5.061e-01  4.426e-01   -1.143
+## part_03_shape_FL_norm                        1.732e-02  1.305e-02    1.327
+## part_03_shape_I1                            -2.484e-13  7.162e-12   -0.035
+## part_03_shape_I2                            -1.825e-22  4.890e-22   -0.373
+## part_03_shape_I3                             6.592e-23  1.612e-22    0.409
+## part_03_shape_I4                             1.160e-18  1.866e-18    0.622
+## part_03_shape_I5                                    NA         NA       NA
+## part_03_shape_I6                            -2.667e-19  5.788e-19   -0.461
+## part_03_shape_I1_norm                        1.128e-02  8.363e-03    1.349
+## part_03_shape_I2_norm                        4.218e-04  1.855e-03    0.227
+## part_03_shape_I3_norm                        7.911e-05  3.490e-04    0.227
+## part_03_shape_I4_norm                       -2.199e-02  1.756e-02   -1.252
+## part_03_shape_I5_norm                               NA         NA       NA
+## part_03_shape_I6_norm                       -3.436e-03  2.647e-03   -1.298
+## part_03_shape_I1_scaled                     -5.716e-01  1.294e+00   -0.442
+## part_03_shape_I2_scaled                     -9.895e+00  8.114e+01   -0.122
+## part_03_shape_I3_scaled                      2.631e+00  1.119e+01    0.235
+## part_03_shape_I4_scaled                      5.955e+00  5.849e+01    0.102
+## part_03_shape_I5_scaled                      4.769e+00  6.386e+01    0.075
+## part_03_shape_I6_scaled                      1.043e+03  5.882e+03    0.177
+## part_03_shape_M000                                  NA         NA       NA
+## part_03_shape_E3_E1                          7.314e-02  7.488e-02    0.977
+## part_03_shape_E2_E1                         -5.279e-02  4.595e-02   -1.149
+## part_03_shape_E3_E2                         -3.184e-02  4.589e-02   -0.694
+## part_03_shape_sqrt_E1                       -4.394e-03  4.847e-03   -0.907
+## part_03_shape_sqrt_E2                        5.309e-03  8.357e-03    0.635
+## part_03_shape_sqrt_E3                        2.869e-02  1.578e-02    1.818
+## part_03_density_O3                          -1.673e-08  1.794e-08   -0.932
+## part_03_density_O4                           7.425e-17  5.204e-15    0.014
+## part_03_density_O5                          -3.161e-21  2.894e-21   -1.092
+## part_03_density_FL                           2.972e-18  2.880e-18    1.032
+## part_03_density_O3_norm                      4.828e-03  1.582e-02    0.305
+## part_03_density_O4_norm                     -8.436e-03  3.007e-02   -0.281
+## part_03_density_O5_norm                      9.281e-02  2.060e-01    0.451
+## part_03_density_FL_norm                     -2.183e-06  3.541e-03   -0.001
+## part_03_density_I1                          -3.748e-13  1.113e-11   -0.034
+## part_03_density_I2                           4.151e-22  1.110e-21    0.374
+## part_03_density_I3                          -1.150e-22  3.730e-22   -0.308
+## part_03_density_I4                          -1.553e-18  4.293e-18   -0.362
+## part_03_density_I5                                  NA         NA       NA
+## part_03_density_I6                           5.798e-19  1.311e-18    0.442
+## part_03_density_I1_norm                     -2.756e-03  3.754e-03   -0.734
+## part_03_density_I2_norm                     -1.784e-04  2.679e-04   -0.666
+## part_03_density_I3_norm                      2.306e-05  6.879e-05    0.335
+## part_03_density_I4_norm                     -8.749e-04  4.442e-03   -0.197
+## part_03_density_I5_norm                             NA         NA       NA
+## part_03_density_I6_norm                      3.830e-04  7.689e-04    0.498
+## part_03_density_I1_scaled                   -6.427e-02  2.358e-01   -0.273
+## part_03_density_I2_scaled                    1.937e+00  1.856e+00    1.044
+## part_03_density_I3_scaled                   -1.684e-01  2.098e-01   -0.803
+## part_03_density_I4_scaled                   -3.904e+00  5.106e+00   -0.765
+## part_03_density_I5_scaled                    4.874e+00  5.548e+00    0.878
+## part_03_density_I6_scaled                    5.254e+01  1.117e+02    0.470
+## part_03_density_M000                                NA         NA       NA
+## part_03_density_E3_E1                       -7.503e-02  7.537e-02   -0.996
+## part_03_density_E2_E1                        5.165e-02  4.631e-02    1.115
+## part_03_density_E3_E2                        2.898e-02  4.636e-02    0.625
+## part_03_density_sqrt_E1                      3.054e-03  5.047e-03    0.605
+## part_03_density_sqrt_E2                     -4.168e-03  8.468e-03   -0.492
+## part_03_density_sqrt_E3                     -2.845e-02  1.650e-02   -1.724
+## part_04_blob_electron_sum                    1.225e-03  5.005e-04    2.447
+## part_04_blob_volume_sum                     -1.663e-03  8.534e-04   -1.949
+## part_04_blob_parts                          -1.538e-03  1.775e-03   -0.867
+## part_04_shape_O3                            -2.922e-08  1.473e-08   -1.984
+## part_04_shape_O4                             4.220e-15  3.733e-15    1.130
+## part_04_shape_O5                            -1.098e-21  1.950e-21   -0.563
+## part_04_shape_FL                             8.737e-19  1.657e-18    0.527
+## part_04_shape_O3_norm                       -1.107e-01  3.333e-02   -3.323
+## part_04_shape_O4_norm                        1.684e-01  5.722e-02    2.944
+## part_04_shape_O5_norm                       -6.410e-01  3.712e-01   -1.727
+## part_04_shape_FL_norm                       -7.350e-03  1.286e-02   -0.571
+## part_04_shape_I1                             1.213e-11  8.001e-12    1.516
+## part_04_shape_I2                            -2.571e-22  8.459e-22   -0.304
+## part_04_shape_I3                            -1.009e-24  2.099e-22   -0.005
+## part_04_shape_I4                            -1.282e-18  2.064e-18   -0.621
+## part_04_shape_I5                                    NA         NA       NA
+## part_04_shape_I6                            -1.753e-19  7.874e-19   -0.223
+## part_04_shape_I1_norm                       -5.144e-03  8.730e-03   -0.589
+## part_04_shape_I2_norm                       -4.825e-04  1.636e-03   -0.295
+## part_04_shape_I3_norm                        2.335e-04  2.557e-04    0.913
+## part_04_shape_I4_norm                        1.042e-02  1.567e-02    0.665
+## part_04_shape_I5_norm                               NA         NA       NA
+## part_04_shape_I6_norm                       -3.595e-04  2.210e-03   -0.163
+## part_04_shape_I1_scaled                      8.228e-01  1.452e+00    0.567
+## part_04_shape_I2_scaled                     -1.229e+01  6.245e+01   -0.197
+## part_04_shape_I3_scaled                     -3.442e+00  9.411e+00   -0.366
+## part_04_shape_I4_scaled                     -5.421e+01  5.147e+01   -1.053
+## part_04_shape_I5_scaled                      2.699e+01  5.467e+01    0.494
+## part_04_shape_I6_scaled                      7.458e+03  7.109e+03    1.049
+## part_04_shape_M000                                  NA         NA       NA
+## part_04_shape_E3_E1                          5.362e-02  7.883e-02    0.680
+## part_04_shape_E2_E1                         -2.286e-02  4.926e-02   -0.464
+## part_04_shape_E3_E2                         -1.174e-01  4.775e-02   -2.459
+## part_04_shape_sqrt_E1                        1.261e-02  5.319e-03    2.371
+## part_04_shape_sqrt_E2                       -1.880e-03  8.684e-03   -0.217
+## part_04_shape_sqrt_E3                        7.455e-03  1.635e-02    0.456
+## part_04_density_O3                           3.413e-08  1.835e-08    1.860
+## part_04_density_O4                          -4.348e-15  6.621e-15   -0.657
+## part_04_density_O5                           1.502e-21  4.927e-21    0.305
+## part_04_density_FL                          -1.813e-18  3.384e-18   -0.536
+## part_04_density_O3_norm                      6.997e-02  1.971e-02    3.549
+## part_04_density_O4_norm                     -8.279e-02  3.702e-02   -2.237
+## part_04_density_O5_norm                      2.890e-01  2.303e-01    1.255
+## part_04_density_FL_norm                      7.124e-03  6.524e-03    1.092
+## part_04_density_I1                          -1.495e-11  1.143e-11   -1.308
+## part_04_density_I2                           4.347e-23  1.947e-21    0.022
+## part_04_density_I3                           1.685e-23  4.000e-22    0.042
+## part_04_density_I4                           1.842e-18  4.464e-18    0.413
+## part_04_density_I5                                  NA         NA       NA
+## part_04_density_I6                           2.542e-19  1.466e-18    0.173
+## part_04_density_I1_norm                      3.245e-03  4.658e-03    0.697
+## part_04_density_I2_norm                      2.729e-04  4.859e-04    0.562
+## part_04_density_I3_norm                     -4.406e-05  8.520e-05   -0.517
+## part_04_density_I4_norm                     -8.518e-03  6.829e-03   -1.247
+## part_04_density_I5_norm                             NA         NA       NA
+## part_04_density_I6_norm                     -2.824e-04  1.033e-03   -0.273
+## part_04_density_I1_scaled                   -3.757e-01  4.169e-01   -0.901
+## part_04_density_I2_scaled                   -9.223e+00  6.441e+00   -1.432
+## part_04_density_I3_scaled                    5.465e-01  5.407e-01    1.011
+## part_04_density_I4_scaled                    1.039e+00  1.141e+01    0.091
+## part_04_density_I5_scaled                    3.720e+00  1.133e+01    0.328
+## part_04_density_I6_scaled                   -2.333e+02  2.204e+02   -1.058
+## part_04_density_M000                                NA         NA       NA
+## part_04_density_E3_E1                       -4.169e-02  7.909e-02   -0.527
+## part_04_density_E2_E1                        3.102e-02  4.957e-02    0.626
+## part_04_density_E3_E2                        1.033e-01  4.814e-02    2.146
+## part_04_density_sqrt_E1                     -9.051e-03  5.541e-03   -1.634
+## part_04_density_sqrt_E2                     -3.651e-04  8.783e-03   -0.042
+## part_04_density_sqrt_E3                     -7.620e-03  1.694e-02   -0.450
+## part_05_blob_electron_sum                   -1.222e-03  5.048e-04   -2.421
+## part_05_blob_volume_sum                      5.882e-05  9.600e-04    0.061
+## part_05_blob_parts                           3.682e-03  2.023e-03    1.820
+## part_05_shape_O3                             3.253e-08  1.559e-08    2.086
+## part_05_shape_O4                            -3.466e-15  4.648e-15   -0.746
+## part_05_shape_O5                            -7.095e-22  2.922e-21   -0.243
+## part_05_shape_FL                             1.032e-18  2.012e-18    0.513
+## part_05_shape_O3_norm                        6.803e-02  3.442e-02    1.976
+## part_05_shape_O4_norm                       -8.660e-02  5.307e-02   -1.632
+## part_05_shape_O5_norm                        1.798e-01  3.861e-01    0.466
+## part_05_shape_FL_norm                        1.583e-03  1.245e-02    0.127
+## part_05_shape_I1                            -1.658e-11  8.199e-12   -2.022
+## part_05_shape_I2                             5.950e-22  1.021e-21    0.583
+## part_05_shape_I3                            -1.188e-22  2.516e-22   -0.472
+## part_05_shape_I4                             5.022e-20  2.544e-18    0.020
+## part_05_shape_I5                                    NA         NA       NA
+## part_05_shape_I6                             5.857e-19  8.260e-19    0.709
+## part_05_shape_I1_norm                       -1.397e-03  8.508e-03   -0.164
+## part_05_shape_I2_norm                       -3.074e-04  1.274e-03   -0.241
+## part_05_shape_I3_norm                       -2.365e-04  2.065e-04   -1.145
+## part_05_shape_I4_norm                        2.609e-03  1.520e-02    0.172
+## part_05_shape_I5_norm                               NA         NA       NA
+## part_05_shape_I6_norm                        1.130e-03  1.658e-03    0.681
+## part_05_shape_I1_scaled                     -3.435e-01  1.480e+00   -0.232
+## part_05_shape_I2_scaled                      3.704e+01  4.363e+01    0.849
+## part_05_shape_I3_scaled                      9.271e+00  6.849e+00    1.354
+## part_05_shape_I4_scaled                      1.886e+01  5.851e+01    0.322
+## part_05_shape_I5_scaled                     -2.808e+01  5.941e+01   -0.473
+## part_05_shape_I6_scaled                     -6.767e+03  6.880e+03   -0.984
+## part_05_shape_M000                                  NA         NA       NA
+## part_05_shape_E3_E1                         -1.010e-01  8.608e-02   -1.173
+## part_05_shape_E2_E1                         -1.736e-02  5.205e-02   -0.333
+## part_05_shape_E3_E2                          1.340e-01  4.981e-02    2.690
+## part_05_shape_sqrt_E1                       -1.270e-02  5.630e-03   -2.256
+## part_05_shape_sqrt_E2                        2.548e-03  8.986e-03    0.284
+## part_05_shape_sqrt_E3                        2.887e-03  1.757e-02    0.164
+## part_05_density_O3                          -3.644e-08  1.856e-08   -1.964
+## part_05_density_O4                           8.456e-15  7.261e-15    1.164
+## part_05_density_O5                           1.910e-21  7.043e-21    0.271
+## part_05_density_FL                          -6.993e-19  4.229e-18   -0.165
+## part_05_density_O3_norm                     -8.470e-02  2.298e-02   -3.686
+## part_05_density_O4_norm                      4.699e-02  3.912e-02    1.201
+## part_05_density_O5_norm                     -6.844e-02  2.852e-01   -0.240
+## part_05_density_FL_norm                     -3.404e-03  5.085e-03   -0.669
+## part_05_density_I1                           2.243e-11  1.259e-11    1.782
+## part_05_density_I2                          -9.835e-22  1.730e-21   -0.568
+## part_05_density_I3                           4.459e-22  3.968e-22    1.124
+## part_05_density_I4                          -1.876e-18  5.168e-18   -0.363
+## part_05_density_I5                                  NA         NA       NA
+## part_05_density_I6                          -2.044e-18  1.485e-18   -1.377
+## part_05_density_I1_norm                      1.525e-03  5.496e-03    0.277
+## part_05_density_I2_norm                     -2.538e-04  6.067e-04   -0.418
+## part_05_density_I3_norm                      3.804e-05  9.918e-05    0.384
+## part_05_density_I4_norm                      2.393e-03  5.355e-03    0.447
+## part_05_density_I5_norm                             NA         NA       NA
+## part_05_density_I6_norm                     -2.626e-04  9.456e-04   -0.278
+## part_05_density_I1_scaled                    5.024e-01  5.743e-01    0.875
+## part_05_density_I2_scaled                   -1.257e+00  9.876e+00   -0.127
+## part_05_density_I3_scaled                   -1.616e-01  6.388e-01   -0.253
+## part_05_density_I4_scaled                   -3.309e+00  1.275e+01   -0.259
+## part_05_density_I5_scaled                    3.283e+00  1.175e+01    0.279
+## part_05_density_I6_scaled                   -3.030e+02  5.844e+02   -0.518
+## part_05_density_M000                                NA         NA       NA
+## part_05_density_E3_E1                        9.900e-02  8.662e-02    1.143
+## part_05_density_E2_E1                        1.489e-02  5.273e-02    0.282
+## part_05_density_E3_E2                       -1.342e-01  5.012e-02   -2.677
+## part_05_density_sqrt_E1                      1.522e-02  5.905e-03    2.577
+## part_05_density_sqrt_E2                     -5.836e-04  9.068e-03   -0.064
+## part_05_density_sqrt_E3                      1.479e-04  1.820e-02    0.008
+## part_06_blob_electron_sum                   -1.825e-04  5.309e-04   -0.344
+## part_06_blob_volume_sum                      1.212e-04  1.077e-03    0.113
+## part_06_blob_parts                           5.610e-04  2.408e-03    0.233
+## part_06_shape_O3                            -2.113e-09  1.877e-08   -0.113
+## part_06_shape_O4                            -3.292e-15  7.355e-15   -0.448
+## part_06_shape_O5                             5.341e-21  7.329e-21    0.729
+## part_06_shape_FL                            -8.409e-19  2.909e-18   -0.289
+## part_06_shape_O3_norm                        1.511e-02  3.804e-02    0.397
+## part_06_shape_O4_norm                       -1.007e-02  5.061e-02   -0.199
+## part_06_shape_O5_norm                       -3.447e-01  4.405e-01   -0.782
+## part_06_shape_FL_norm                       -4.364e-03  1.630e-02   -0.268
+## part_06_shape_I1                            -2.983e-14  1.210e-11   -0.002
+## part_06_shape_I2                             2.934e-22  1.969e-21    0.149
+## part_06_shape_I3                            -9.476e-23  2.991e-22   -0.317
+## part_06_shape_I4                             8.248e-19  3.547e-18    0.233
+## part_06_shape_I5                                    NA         NA       NA
+## part_06_shape_I6                             4.372e-19  1.087e-18    0.402
+## part_06_shape_I1_norm                        5.891e-03  1.043e-02    0.565
+## part_06_shape_I2_norm                        1.290e-03  1.282e-03    1.006
+## part_06_shape_I3_norm                       -4.503e-05  1.542e-04   -0.292
+## part_06_shape_I4_norm                       -3.534e-04  1.793e-02   -0.020
+## part_06_shape_I5_norm                               NA         NA       NA
+## part_06_shape_I6_norm                       -5.184e-04  1.626e-03   -0.319
+## part_06_shape_I1_scaled                     -8.892e-01  1.758e+00   -0.506
+## part_06_shape_I2_scaled                     -4.095e+01  4.957e+01   -0.826
+## part_06_shape_I3_scaled                      3.478e+00  6.055e+00    0.574
+## part_06_shape_I4_scaled                      3.662e+01  7.459e+01    0.491
+## part_06_shape_I5_scaled                     -2.671e+01  7.358e+01   -0.363
+## part_06_shape_I6_scaled                      8.732e+02  6.862e+03    0.127
+## part_06_shape_M000                                  NA         NA       NA
+## part_06_shape_E3_E1                         -4.321e-02  9.456e-02   -0.457
+## part_06_shape_E2_E1                          4.557e-02  5.947e-02    0.766
+## part_06_shape_E3_E2                          6.076e-02  5.463e-02    1.112
+## part_06_shape_sqrt_E1                       -1.431e-03  6.341e-03   -0.226
+## part_06_shape_sqrt_E2                        2.903e-03  9.795e-03    0.296
+## part_06_shape_sqrt_E3                       -1.053e-02  1.996e-02   -0.527
+## part_06_density_O3                          -2.057e-10  2.098e-08   -0.010
+## part_06_density_O4                           5.880e-15  1.163e-14    0.505
+## part_06_density_O5                          -1.134e-20  1.636e-20   -0.693
+## part_06_density_FL                           1.610e-18  6.332e-18    0.254
+## part_06_density_O3_norm                     -2.114e-02  2.601e-02   -0.813
+## part_06_density_O4_norm                      3.230e-03  3.741e-02    0.086
+## part_06_density_O5_norm                      1.447e-01  3.272e-01    0.442
+## part_06_density_FL_norm                      2.248e-03  7.252e-03    0.310
+## part_06_density_I1                          -2.935e-12  1.573e-11   -0.187
+## part_06_density_I2                          -1.072e-21  2.518e-21   -0.426
+## part_06_density_I3                           4.789e-23  4.620e-22    0.104
+## part_06_density_I4                          -7.648e-19  7.066e-18   -0.108
+## part_06_density_I5                                  NA         NA       NA
+## part_06_density_I6                           2.195e-20  1.845e-18    0.012
+## part_06_density_I1_norm                     -1.683e-03  6.806e-03   -0.247
+## part_06_density_I2_norm                     -2.737e-04  6.788e-04   -0.403
+## part_06_density_I3_norm                     -3.307e-05  7.189e-05   -0.460
+## part_06_density_I4_norm                     -8.246e-04  7.213e-03   -0.114
+## part_06_density_I5_norm                             NA         NA       NA
+## part_06_density_I6_norm                      6.025e-04  1.016e-03    0.593
+## part_06_density_I1_scaled                    2.020e-01  7.028e-01    0.287
+## part_06_density_I2_scaled                    5.396e+00  8.536e+00    0.632
+## part_06_density_I3_scaled                   -1.979e-01  1.188e+00   -0.167
+## part_06_density_I4_scaled                   -6.974e+00  2.346e+01   -0.297
+## part_06_density_I5_scaled                    5.626e+00  2.160e+01    0.260
+## part_06_density_I6_scaled                   -8.679e+01  8.477e+02   -0.102
+## part_06_density_M000                                NA         NA       NA
+## part_06_density_E3_E1                        3.692e-02  9.503e-02    0.388
+## part_06_density_E2_E1                       -5.245e-02  6.009e-02   -0.873
+## part_06_density_E3_E2                       -5.820e-02  5.521e-02   -1.054
+## part_06_density_sqrt_E1                      1.818e-03  6.654e-03    0.273
+## part_06_density_sqrt_E2                     -7.005e-04  9.908e-03   -0.071
+## part_06_density_sqrt_E3                      1.174e-02  2.095e-02    0.560
+## part_07_blob_electron_sum                    2.446e-04  5.689e-04    0.430
+## part_07_blob_volume_sum                     -6.037e-04  1.258e-03   -0.480
+## part_07_blob_parts                          -1.404e-03  2.975e-03   -0.472
+## part_07_shape_O3                             5.867e-09  2.388e-08    0.246
+## part_07_shape_O4                            -3.662e-16  1.241e-14   -0.029
+## part_07_shape_O5                            -2.982e-21  1.857e-20   -0.161
+## part_07_shape_FL                            -2.247e-18  5.846e-18   -0.384
+## part_07_shape_O3_norm                        9.164e-03  4.341e-02    0.211
+## part_07_shape_O4_norm                       -7.127e-02  6.089e-02   -1.170
+## part_07_shape_O5_norm                        2.808e-01  4.852e-01    0.579
+## part_07_shape_FL_norm                        1.542e-02  2.041e-02    0.755
+## part_07_shape_I1                            -3.206e-12  1.784e-11   -0.180
+## part_07_shape_I2                            -4.463e-22  4.074e-21   -0.110
+## part_07_shape_I3                             1.180e-22  4.222e-22    0.279
+## part_07_shape_I4                             2.413e-18  6.369e-18    0.379
+## part_07_shape_I5                                    NA         NA       NA
+## part_07_shape_I6                            -1.287e-19  1.831e-18   -0.070
+## part_07_shape_I1_norm                        1.933e-03  1.251e-02    0.154
+## part_07_shape_I2_norm                       -5.608e-04  1.751e-03   -0.320
+## part_07_shape_I3_norm                        6.722e-05  2.446e-04    0.275
+## part_07_shape_I4_norm                       -2.195e-02  2.416e-02   -0.908
+## part_07_shape_I5_norm                               NA         NA       NA
+## part_07_shape_I6_norm                       -5.968e-04  2.370e-03   -0.252
+## part_07_shape_I1_scaled                     -1.068e+00  2.146e+00   -0.498
+## part_07_shape_I2_scaled                      2.031e+01  6.716e+01    0.302
+## part_07_shape_I3_scaled                     -2.587e+00  9.941e+00   -0.260
+## part_07_shape_I4_scaled                      4.935e-01  8.320e+01    0.006
+## part_07_shape_I5_scaled                      2.702e+01  8.341e+01    0.324
+## part_07_shape_I6_scaled                      5.882e+03  1.099e+04    0.535
+## part_07_shape_M000                                  NA         NA       NA
+## part_07_shape_E3_E1                          6.433e-02  1.017e-01    0.633
+## part_07_shape_E2_E1                          1.201e-02  6.532e-02    0.184
+## part_07_shape_E3_E2                         -8.802e-02  6.404e-02   -1.375
+## part_07_shape_sqrt_E1                        1.912e-03  7.296e-03    0.262
+## part_07_shape_sqrt_E2                       -6.247e-03  1.147e-02   -0.544
+## part_07_shape_sqrt_E3                       -4.522e-03  2.210e-02   -0.205
+## part_07_density_O3                           4.844e-09  2.497e-08    0.194
+## part_07_density_O4                          -5.937e-15  1.640e-14   -0.362
+## part_07_density_O5                           5.439e-21  3.056e-20    0.178
+## part_07_density_FL                           2.431e-18  9.347e-18    0.260
+## part_07_density_O3_norm                     -3.770e-03  3.137e-02   -0.120
+## part_07_density_O4_norm                      3.578e-02  5.497e-02    0.651
+## part_07_density_O5_norm                     -2.347e-01  4.598e-01   -0.511
+## part_07_density_FL_norm                     -8.142e-03  1.109e-02   -0.734
+## part_07_density_I1                           1.199e-12  2.138e-11    0.056
+## part_07_density_I2                           2.380e-21  4.865e-21    0.489
+## part_07_density_I3                          -2.882e-22  7.499e-22   -0.384
+## part_07_density_I4                          -1.130e-18  1.018e-17   -0.111
+## part_07_density_I5                                  NA         NA       NA
+## part_07_density_I6                          -1.367e-20  2.810e-18   -0.005
+## part_07_density_I1_norm                      2.657e-03  7.996e-03    0.332
+## part_07_density_I2_norm                      1.078e-04  7.456e-04    0.145
+## part_07_density_I3_norm                     -1.134e-05  1.069e-04   -0.106
+## part_07_density_I4_norm                      8.493e-03  1.196e-02    0.710
+## part_07_density_I5_norm                             NA         NA       NA
+## part_07_density_I6_norm                      4.954e-04  1.407e-03    0.352
+## part_07_density_I1_scaled                   -3.445e-01  8.743e-01   -0.394
+## part_07_density_I2_scaled                    1.573e+00  1.071e+01    0.147
+## part_07_density_I3_scaled                   -7.505e-01  1.120e+00   -0.670
+## part_07_density_I4_scaled                    7.942e+00  2.431e+01    0.327
+## part_07_density_I5_scaled                   -1.190e+01  2.374e+01   -0.501
+## part_07_density_I6_scaled                    4.799e+02  8.746e+02    0.549
+## part_07_density_M000                                NA         NA       NA
+## part_07_density_E3_E1                       -7.119e-02  1.017e-01   -0.700
+## part_07_density_E2_E1                       -1.240e-02  6.593e-02   -0.188
+## part_07_density_E3_E2                        8.878e-02  6.452e-02    1.376
+## part_07_density_sqrt_E1                     -1.835e-03  7.626e-03   -0.241
+## part_07_density_sqrt_E2                      7.811e-03  1.166e-02    0.670
+## part_07_density_sqrt_E3                      6.495e-03  2.304e-02    0.282
+## part_08_blob_electron_sum                   -2.818e-04  6.235e-04   -0.452
+## part_08_blob_volume_sum                      5.363e-05  1.570e-03    0.034
+## part_08_blob_parts                          -9.024e-04  3.779e-03   -0.239
+## part_08_shape_O3                            -1.756e-08  3.357e-08   -0.523
+## part_08_shape_O4                             8.665e-15  2.357e-14    0.368
+## part_08_shape_O5                            -8.973e-21  3.824e-20   -0.235
+## part_08_shape_FL                             6.772e-18  1.208e-17    0.561
+## part_08_shape_O3_norm                       -1.071e-02  5.710e-02   -0.188
+## part_08_shape_O4_norm                       -6.061e-02  9.885e-02   -0.613
+## part_08_shape_O5_norm                        3.849e-02  8.277e-01    0.047
+## part_08_shape_FL_norm                        2.323e-02  3.066e-02    0.757
+## part_08_shape_I1                             1.178e-11  2.674e-11    0.441
+## part_08_shape_I2                             1.657e-21  5.531e-21    0.300
+## part_08_shape_I3                            -1.164e-22  8.677e-22   -0.134
+## part_08_shape_I4                            -6.944e-18  1.315e-17   -0.528
+## part_08_shape_I5                                    NA         NA       NA
+## part_08_shape_I6                            -1.284e-18  3.534e-18   -0.363
+## part_08_shape_I1_norm                       -3.792e-04  1.919e-02   -0.020
+## part_08_shape_I2_norm                       -1.621e-06  3.264e-03    0.000
+## part_08_shape_I3_norm                       -1.574e-04  3.673e-04   -0.429
+## part_08_shape_I4_norm                       -2.075e-02  3.587e-02   -0.579
+## part_08_shape_I5_norm                               NA         NA       NA
+## part_08_shape_I6_norm                        7.118e-04  3.217e-03    0.221
+## part_08_shape_I1_scaled                      7.320e-01  3.123e+00    0.234
+## part_08_shape_I2_scaled                      1.371e+01  1.397e+02    0.098
+## part_08_shape_I3_scaled                      1.129e+00  1.557e+01    0.073
+## part_08_shape_I4_scaled                     -1.011e+02  1.292e+02   -0.783
+## part_08_shape_I5_scaled                      8.999e+01  1.328e+02    0.677
+## part_08_shape_I6_scaled                      1.231e+02  1.310e+04    0.009
+## part_08_shape_M000                                  NA         NA       NA
+## part_08_shape_E3_E1                         -6.993e-03  1.164e-01   -0.060
+## part_08_shape_E2_E1                          1.881e-02  7.852e-02    0.240
+## part_08_shape_E3_E2                          3.895e-02  7.713e-02    0.505
+## part_08_shape_sqrt_E1                        2.809e-03  9.437e-03    0.298
+## part_08_shape_sqrt_E2                       -8.600e-05  1.491e-02   -0.006
+## part_08_shape_sqrt_E3                       -1.867e-02  2.841e-02   -0.657
+## part_08_density_O3                           1.901e-08  3.616e-08    0.526
+## part_08_density_O4                          -1.836e-14  2.912e-14   -0.630
+## part_08_density_O5                           3.075e-20  6.844e-20    0.449
+## part_08_density_FL                          -7.767e-18  1.731e-17   -0.449
+## part_08_density_O3_norm                     -1.517e-02  4.169e-02   -0.364
+## part_08_density_O4_norm                      3.094e-02  8.311e-02    0.372
+## part_08_density_O5_norm                      1.285e-01  6.573e-01    0.195
+## part_08_density_FL_norm                     -1.043e-02  1.642e-02   -0.635
+## part_08_density_I1                          -5.082e-12  3.496e-11   -0.145
+## part_08_density_I2                          -2.727e-21  8.466e-21   -0.322
+## part_08_density_I3                           1.416e-23  1.536e-21    0.009
+## part_08_density_I4                           6.848e-18  1.915e-17    0.358
+## part_08_density_I5                                  NA         NA       NA
+## part_08_density_I6                           1.894e-18  5.598e-18    0.338
+## part_08_density_I1_norm                     -5.030e-03  1.290e-02   -0.390
+## part_08_density_I2_norm                      4.159e-04  2.111e-03    0.197
+## part_08_density_I3_norm                     -1.761e-06  1.896e-04   -0.009
+## part_08_density_I4_norm                      7.771e-03  1.819e-02    0.427
+## part_08_density_I5_norm                             NA         NA       NA
+## part_08_density_I6_norm                      5.806e-04  1.774e-03    0.327
+## part_08_density_I1_scaled                    7.297e-01  1.550e+00    0.471
+## part_08_density_I2_scaled                   -1.668e+01  3.502e+01   -0.476
+## part_08_density_I3_scaled                    3.876e-02  3.469e+00    0.011
+## part_08_density_I4_scaled                    1.420e+01  4.673e+01    0.304
+## part_08_density_I5_scaled                   -6.435e+00  4.621e+01   -0.139
+## part_08_density_I6_scaled                   -1.417e+03  2.914e+03   -0.486
+## part_08_density_M000                                NA         NA       NA
+## part_08_density_E3_E1                        1.924e-02  1.169e-01    0.165
+## part_08_density_E2_E1                       -3.112e-02  7.979e-02   -0.390
+## part_08_density_E3_E2                       -3.955e-02  7.792e-02   -0.508
+## part_08_density_sqrt_E1                     -1.621e-03  9.869e-03   -0.164
+## part_08_density_sqrt_E2                      3.424e-03  1.523e-02    0.225
+## part_08_density_sqrt_E3                      1.744e-02  2.923e-02    0.597
+## part_09_blob_electron_sum                    1.585e-04  4.816e-04    0.329
+## part_09_blob_volume_sum                      9.392e-04  1.154e-03    0.814
+## part_09_blob_parts                          -3.093e-03  3.855e-03   -0.802
+## part_09_shape_O3                             3.706e-09  2.984e-08    0.124
+## part_09_shape_O4                            -1.434e-14  2.495e-14   -0.575
+## part_09_shape_O5                             3.049e-20  4.551e-20    0.670
+## part_09_shape_FL                            -7.734e-18  1.433e-17   -0.540
+## part_09_shape_O3_norm                        3.663e-02  4.588e-02    0.799
+## part_09_shape_O4_norm                        1.749e-02  9.732e-02    0.180
+## part_09_shape_O5_norm                        3.921e-01  8.037e-01    0.488
+## part_09_shape_FL_norm                       -2.853e-03  2.997e-02   -0.095
+## part_09_shape_I1                            -7.053e-12  2.091e-11   -0.337
+## part_09_shape_I2                            -3.476e-21  6.834e-21   -0.509
+## part_09_shape_I3                            -5.616e-23  9.705e-22   -0.058
+## part_09_shape_I4                             7.827e-18  1.493e-17    0.524
+## part_09_shape_I5                                    NA         NA       NA
+## part_09_shape_I6                             1.811e-18  3.308e-18    0.547
+## part_09_shape_I1_norm                       -1.032e-03  1.679e-02   -0.061
+## part_09_shape_I2_norm                       -8.537e-06  2.939e-03   -0.003
+## part_09_shape_I3_norm                        3.661e-05  3.188e-04    0.115
+## part_09_shape_I4_norm                       -1.006e-02  3.204e-02   -0.314
+## part_09_shape_I5_norm                               NA         NA       NA
+## part_09_shape_I6_norm                        3.310e-04  2.698e-03    0.123
+## part_09_shape_I1_scaled                     -1.541e+00  2.687e+00   -0.574
+## part_09_shape_I2_scaled                     -5.360e+00  1.312e+02   -0.041
+## part_09_shape_I3_scaled                     -7.342e+00  1.123e+01   -0.654
+## part_09_shape_I4_scaled                      7.294e+00  1.298e+02    0.056
+## part_09_shape_I5_scaled                      4.202e+01  1.268e+02    0.331
+## part_09_shape_I6_scaled                      8.750e+03  1.250e+04    0.700
+## part_09_shape_M000                                  NA         NA       NA
+## part_09_shape_E3_E1                          2.029e-01  1.110e-01    1.827
+## part_09_shape_E2_E1                         -6.705e-02  7.561e-02   -0.887
+## part_09_shape_E3_E2                         -5.540e-02  7.692e-02   -0.720
+## part_09_shape_sqrt_E1                       -2.447e-03  8.284e-03   -0.295
+## part_09_shape_sqrt_E2                       -7.923e-03  1.404e-02   -0.564
+## part_09_shape_sqrt_E3                        2.622e-02  2.580e-02    1.016
+## part_09_density_O3                          -1.895e-08  3.246e-08   -0.584
+## part_09_density_O4                           3.346e-14  3.587e-14    0.933
+## part_09_density_O5                          -9.997e-20  9.402e-20   -1.063
+## part_09_density_FL                           1.056e-17  2.115e-17    0.499
+## part_09_density_O3_norm                      8.645e-04  3.453e-02    0.025
+## part_09_density_O4_norm                     -5.018e-02  7.431e-02   -0.675
+## part_09_density_O5_norm                     -3.240e-02  4.396e-01   -0.074
+## part_09_density_FL_norm                      1.089e-02  1.552e-02    0.702
+## part_09_density_I1                           8.471e-12  2.990e-11    0.283
+## part_09_density_I2                           3.354e-21  1.063e-20    0.316
+## part_09_density_I3                          -9.320e-23  1.584e-21   -0.059
+## part_09_density_I4                          -9.155e-18  2.115e-17   -0.433
+## part_09_density_I5                                  NA         NA       NA
+## part_09_density_I6                          -1.634e-18  4.894e-18   -0.334
+## part_09_density_I1_norm                      7.379e-03  1.068e-02    0.691
+## part_09_density_I2_norm                      1.901e-04  1.653e-03    0.115
+## part_09_density_I3_norm                      2.343e-05  1.615e-04    0.145
+## part_09_density_I4_norm                     -1.261e-02  1.546e-02   -0.815
+## part_09_density_I5_norm                             NA         NA       NA
+## part_09_density_I6_norm                     -8.362e-04  1.607e-03   -0.520
+## part_09_density_I1_scaled                   -3.687e-01  1.208e+00   -0.305
+## part_09_density_I2_scaled                   -8.756e+00  2.723e+01   -0.322
+## part_09_density_I3_scaled                    7.842e-01  2.209e+00    0.355
+## part_09_density_I4_scaled                   -1.122e+01  4.104e+01   -0.273
+## part_09_density_I5_scaled                    1.447e+01  3.904e+01    0.371
+## part_09_density_I6_scaled                   -3.275e+02  2.151e+03   -0.152
+## part_09_density_M000                                NA         NA       NA
+## part_09_density_E3_E1                       -2.081e-01  1.110e-01   -1.874
+## part_09_density_E2_E1                        7.392e-02  7.680e-02    0.962
+## part_09_density_E3_E2                        5.508e-02  7.780e-02    0.708
+## part_09_density_sqrt_E1                      5.108e-04  8.618e-03    0.059
+## part_09_density_sqrt_E2                      6.718e-03  1.448e-02    0.464
+## part_09_density_sqrt_E3                     -2.925e-02  2.639e-02   -1.109
+## local_volume                                 3.722e-07  8.673e-07    0.429
+## local_electrons                              4.621e+00  2.206e+01    0.210
+## local_mean                                   1.503e-01  1.319e-01    1.140
+## local_std                                   -3.602e-02  1.470e-01   -0.245
+## local_min                                           NA         NA       NA
+## local_max                                    2.805e-04  2.408e-03    0.117
+## local_skewness                              -1.692e-02  7.842e-02   -0.216
+## local_parts                                         NA         NA       NA
+## weight_col                                          NA         NA       NA
+## grid_space                                          NA         NA       NA
+## solvent_radius                                      NA         NA       NA
+## solvent_opening_radius                              NA         NA       NA
+## resolution_max_limit                                NA         NA       NA
+## resolution                                  -4.586e-03  1.273e-03   -3.603
+## TwoFoFc_mean                                -5.121e+06  9.563e+05   -5.355
+## TwoFoFc_std                                 -2.754e+00  1.960e-01  -14.053
+## TwoFoFc_square_std                           1.915e-01  2.137e-02    8.966
+## TwoFoFc_min                                 -9.740e-03  4.366e-03   -2.231
+## TwoFoFc_max                                 -6.247e-03  9.190e-04   -6.798
+## Fo_mean                                     -1.783e+03  3.373e+03   -0.529
+## Fo_std                                      -6.511e-01  1.981e-01   -3.287
+## Fo_square_std                                1.566e-01  3.767e-02    4.157
+## Fo_min                                      -5.098e-02  5.845e-03   -8.723
+## Fo_max                                      -1.319e-02  1.936e-03   -6.815
+## FoFc_mean                                    5.118e+06  9.563e+05    5.352
+## FoFc_std                                     3.202e+00  1.611e-01   19.875
+## FoFc_square_std                             -1.033e-01  1.784e-02   -5.792
+## FoFc_min                                    -7.706e-03  1.589e-03   -4.850
+## FoFc_max                                     6.827e-03  6.285e-04   10.863
+## Fc_mean                                      5.132e+06  9.560e+05    5.368
+## Fc_std                                       2.566e+00  2.380e-01   10.784
+## Fc_square_std                               -1.967e-01  4.488e-02   -4.382
+## Fc_min                                       7.004e-02  5.098e-03   13.740
+## Fc_max                                       1.706e-02  1.784e-03    9.567
+## solvent_mask_count                           1.059e-09  1.583e-10    6.691
+## void_mask_count                             -1.572e-09  9.910e-10   -1.586
+## modeled_mask_count                          -1.173e-09  4.462e-10   -2.629
+## solvent_ratio                               -2.534e-02  7.131e-03   -3.553
+## TwoFoFc_bulk_mean                           -6.403e+04  1.358e+04   -4.716
+## TwoFoFc_bulk_std                             1.188e+00  2.948e-01    4.029
+## TwoFoFc_void_mean                           -3.798e+03  6.832e+02   -5.559
+## TwoFoFc_void_std                             6.585e-01  1.073e-01    6.137
+## TwoFoFc_modeled_mean                        -2.894e+04  1.590e+03  -18.198
+## TwoFoFc_modeled_std                          1.145e+00  1.216e-01    9.412
+## Fo_bulk_mean                                 9.293e-02  1.238e-01    0.750
+## Fo_bulk_std                                 -1.416e-01  9.213e-02   -1.536
+## Fo_void_mean                                -3.747e-02  1.160e-01   -0.323
+## Fo_void_std                                 -2.164e-01  1.458e-01   -1.484
+## Fo_modeled_mean                             -5.773e-01  1.412e-01   -4.089
+## Fo_modeled_std                               7.269e-01  1.259e-01    5.775
+## FoFc_bulk_mean                               6.402e+04  1.358e+04    4.716
+## FoFc_bulk_std                               -3.069e-01  9.659e-02   -3.178
+## FoFc_void_mean                               3.797e+03  6.832e+02    5.559
+## FoFc_void_std                               -3.880e-01  9.901e-02   -3.918
+## FoFc_modeled_mean                            2.894e+04  1.590e+03   18.198
+## FoFc_modeled_std                            -2.430e+00  8.882e-02  -27.354
+## Fc_bulk_mean                                 6.403e+04  1.358e+04    4.716
+## Fc_bulk_std                                  2.852e-01  5.970e-02    4.777
+## Fc_void_mean                                 3.798e+03  6.832e+02    5.559
+## Fc_void_std                                 -7.232e-01  9.626e-02   -7.514
+## Fc_modeled_mean                              2.894e+04  1.590e+03   18.198
+## Fc_modeled_std                              -1.510e+00  1.395e-01  -10.825
+## TwoFoFc_void_fit_binormal_mean1              3.832e-03  7.428e-03    0.516
+## TwoFoFc_void_fit_binormal_std1              -8.119e-03  1.543e-02   -0.526
+## TwoFoFc_void_fit_binormal_mean2             -5.784e-79  2.642e-79   -2.190
+## TwoFoFc_void_fit_binormal_std2                      NA         NA       NA
+## TwoFoFc_void_fit_binormal_scale              3.064e-03  2.373e-03    1.291
+## TwoFoFc_solvent_fit_normal_mean              4.034e-01  2.160e-01    1.868
+## TwoFoFc_solvent_fit_normal_std              -9.121e-01  2.745e-01   -3.323
+## part_step_FoFc_std_min                              NA         NA       NA
+## part_step_FoFc_std_max                              NA         NA       NA
+## part_step_FoFc_std_step                             NA         NA       NA
+##                                             Pr(>|t|)    
+## (Intercept)                                  < 2e-16 ***
+## local_BAa                                         NA    
+## local_NPa                                         NA    
+## local_Ra                                          NA    
+## local_RGa                                         NA    
+## local_SRGa                                        NA    
+## local_CCSa                                        NA    
+## local_CCPa                                        NA    
+## local_ZOa                                         NA    
+## local_ZDa                                         NA    
+## local_ZD_minus_a                                  NA    
+## local_ZD_plus_a                                   NA    
+## local_res_atom_count                        2.14e-06 ***
+## local_res_atom_non_h_occupancy_sum          1.79e-14 ***
+## local_res_atom_non_h_electron_sum            < 2e-16 ***
+## local_res_atom_non_h_electron_occupancy_sum 2.44e-10 ***
+## local_res_atom_C_count                       < 2e-16 ***
+## local_res_atom_N_count                       < 2e-16 ***
+## local_res_atom_O_count                       < 2e-16 ***
+## local_res_atom_S_count                       < 2e-16 ***
+## dict_atom_non_h_count                        < 2e-16 ***
+## dict_atom_non_h_electron_sum                 < 2e-16 ***
+## dict_atom_C_count                            < 2e-16 ***
+## dict_atom_N_count                            < 2e-16 ***
+## dict_atom_O_count                            < 2e-16 ***
+## dict_atom_S_count                            < 2e-16 ***
+## part_00_blob_electron_sum                   0.834090    
+## part_00_blob_volume_sum                     0.750354    
+## part_00_blob_parts                          0.357630    
+## part_00_shape_O3                            0.975061    
+## part_00_shape_O4                            0.644203    
+## part_00_shape_O5                            0.742815    
+## part_00_shape_FL                            0.006805 ** 
+## part_00_shape_O3_norm                       0.744838    
+## part_00_shape_O4_norm                       0.937011    
+## part_00_shape_O5_norm                       0.697003    
+## part_00_shape_FL_norm                       0.521781    
+## part_00_shape_I1                            0.183420    
+## part_00_shape_I2                            0.315438    
+## part_00_shape_I3                            0.077234 .  
+## part_00_shape_I4                            0.005796 ** 
+## part_00_shape_I5                                  NA    
+## part_00_shape_I6                            0.078388 .  
+## part_00_shape_I1_norm                       0.551631    
+## part_00_shape_I2_norm                       0.470377    
+## part_00_shape_I3_norm                       0.411217    
+## part_00_shape_I4_norm                       0.378294    
+## part_00_shape_I5_norm                             NA    
+## part_00_shape_I6_norm                       0.364185    
+## part_00_shape_I1_scaled                     0.407339    
+## part_00_shape_I2_scaled                     0.710567    
+## part_00_shape_I3_scaled                     0.812954    
+## part_00_shape_I4_scaled                     0.827648    
+## part_00_shape_I5_scaled                     0.696165    
+## part_00_shape_I6_scaled                     0.710778    
+## part_00_shape_M000                                NA    
+## part_00_shape_E3_E1                         0.830424    
+## part_00_shape_E2_E1                         0.980097    
+## part_00_shape_E3_E2                         0.996020    
+## part_00_shape_sqrt_E1                       0.447055    
+## part_00_shape_sqrt_E2                       0.803902    
+## part_00_shape_sqrt_E3                       0.821419    
+## part_00_density_O3                          0.674544    
+## part_00_density_O4                          0.306207    
+## part_00_density_O5                          0.439626    
+## part_00_density_FL                          0.002668 ** 
+## part_00_density_O3_norm                     0.307344    
+## part_00_density_O4_norm                     0.210337    
+## part_00_density_O5_norm                     0.415121    
+## part_00_density_FL_norm                     0.388260    
+## part_00_density_I1                          0.078722 .  
+## part_00_density_I2                          0.175080    
+## part_00_density_I3                          0.092759 .  
+## part_00_density_I4                          0.001270 ** 
+## part_00_density_I5                                NA    
+## part_00_density_I6                          0.063726 .  
+## part_00_density_I1_norm                     0.337337    
+## part_00_density_I2_norm                     0.243236    
+## part_00_density_I3_norm                     0.227550    
+## part_00_density_I4_norm                     0.771565    
+## part_00_density_I5_norm                           NA    
+## part_00_density_I6_norm                     0.346692    
+## part_00_density_I1_scaled                   0.221507    
+## part_00_density_I2_scaled                   0.375322    
+## part_00_density_I3_scaled                   0.828713    
+## part_00_density_I4_scaled                   0.823189    
+## part_00_density_I5_scaled                   0.902148    
+## part_00_density_I6_scaled                   0.524196    
+## part_00_density_M000                              NA    
+## part_00_density_E3_E1                       0.608844    
+## part_00_density_E2_E1                       0.662947    
+## part_00_density_E3_E2                       0.738062    
+## part_00_density_sqrt_E1                     0.466414    
+## part_00_density_sqrt_E2                     0.502984    
+## part_00_density_sqrt_E3                     0.919266    
+## part_01_blob_electron_sum                   0.456241    
+## part_01_blob_volume_sum                     0.757601    
+## part_01_blob_parts                          0.050127 .  
+## part_01_shape_O3                            0.793315    
+## part_01_shape_O4                            0.778749    
+## part_01_shape_O5                            0.855922    
+## part_01_shape_FL                            0.016039 *  
+## part_01_shape_O3_norm                       0.314051    
+## part_01_shape_O4_norm                       0.520028    
+## part_01_shape_O5_norm                       0.605805    
+## part_01_shape_FL_norm                       0.497684    
+## part_01_shape_I1                            0.397620    
+## part_01_shape_I2                            0.438285    
+## part_01_shape_I3                            0.126425    
+## part_01_shape_I4                            0.010613 *  
+## part_01_shape_I5                                  NA    
+## part_01_shape_I6                            0.142155    
+## part_01_shape_I1_norm                       0.872241    
+## part_01_shape_I2_norm                       0.483606    
+## part_01_shape_I3_norm                       0.397894    
+## part_01_shape_I4_norm                       0.435446    
+## part_01_shape_I5_norm                             NA    
+## part_01_shape_I6_norm                       0.331809    
+## part_01_shape_I1_scaled                     0.319743    
+## part_01_shape_I2_scaled                     0.685206    
+## part_01_shape_I3_scaled                     0.932495    
+## part_01_shape_I4_scaled                     0.450634    
+## part_01_shape_I5_scaled                     0.304764    
+## part_01_shape_I6_scaled                     0.945212    
+## part_01_shape_M000                                NA    
+## part_01_shape_E3_E1                         0.429610    
+## part_01_shape_E2_E1                         0.657435    
+## part_01_shape_E3_E2                         0.711359    
+## part_01_shape_sqrt_E1                       0.773845    
+## part_01_shape_sqrt_E2                       0.914916    
+## part_01_shape_sqrt_E3                       0.717987    
+## part_01_density_O3                          0.978355    
+## part_01_density_O4                          0.493861    
+## part_01_density_O5                          0.472225    
+## part_01_density_FL                          0.004155 ** 
+## part_01_density_O3_norm                     0.967177    
+## part_01_density_O4_norm                     0.578347    
+## part_01_density_O5_norm                     0.957370    
+## part_01_density_FL_norm                     0.322366    
+## part_01_density_I1                          0.225879    
+## part_01_density_I2                          0.304625    
+## part_01_density_I3                          0.132560    
+## part_01_density_I4                          0.002124 ** 
+## part_01_density_I5                                NA    
+## part_01_density_I6                          0.118576    
+## part_01_density_I1_norm                     0.964778    
+## part_01_density_I2_norm                     0.394777    
+## part_01_density_I3_norm                     0.336072    
+## part_01_density_I4_norm                     0.450389    
+## part_01_density_I5_norm                           NA    
+## part_01_density_I6_norm                     0.272059    
+## part_01_density_I1_scaled                   0.903149    
+## part_01_density_I2_scaled                   0.773698    
+## part_01_density_I3_scaled                   0.479666    
+## part_01_density_I4_scaled                   0.983269    
+## part_01_density_I5_scaled                   0.912389    
+## part_01_density_I6_scaled                   0.998119    
+## part_01_density_M000                              NA    
+## part_01_density_E3_E1                       0.297895    
+## part_01_density_E2_E1                       0.439882    
+## part_01_density_E3_E2                       0.610595    
+## part_01_density_sqrt_E1                     0.551351    
+## part_01_density_sqrt_E2                     0.628871    
+## part_01_density_sqrt_E3                     0.736448    
+## part_02_blob_electron_sum                   0.532539    
+## part_02_blob_volume_sum                     0.054138 .  
+## part_02_blob_parts                          0.309082    
+## part_02_shape_O3                            0.526079    
+## part_02_shape_O4                            0.624459    
+## part_02_shape_O5                            0.658745    
+## part_02_shape_FL                            0.973057    
+## part_02_shape_O3_norm                       0.825318    
+## part_02_shape_O4_norm                       0.965107    
+## part_02_shape_O5_norm                       0.195955    
+## part_02_shape_FL_norm                       0.172676    
+## part_02_shape_I1                            0.704323    
+## part_02_shape_I2                            0.732876    
+## part_02_shape_I3                            0.699762    
+## part_02_shape_I4                            0.684560    
+## part_02_shape_I5                                  NA    
+## part_02_shape_I6                            0.624812    
+## part_02_shape_I1_norm                       0.400673    
+## part_02_shape_I2_norm                       0.888428    
+## part_02_shape_I3_norm                       0.617432    
+## part_02_shape_I4_norm                       0.123534    
+## part_02_shape_I5_norm                             NA    
+## part_02_shape_I6_norm                       0.774865    
+## part_02_shape_I1_scaled                     0.273119    
+## part_02_shape_I2_scaled                     0.803054    
+## part_02_shape_I3_scaled                     0.922103    
+## part_02_shape_I4_scaled                     0.416829    
+## part_02_shape_I5_scaled                     0.191344    
+## part_02_shape_I6_scaled                     0.558180    
+## part_02_shape_M000                                NA    
+## part_02_shape_E3_E1                         0.860747    
+## part_02_shape_E2_E1                         0.924524    
+## part_02_shape_E3_E2                         0.070046 .  
+## part_02_shape_sqrt_E1                       0.974656    
+## part_02_shape_sqrt_E2                       0.239611    
+## part_02_shape_sqrt_E3                       0.351028    
+## part_02_density_O3                          0.386425    
+## part_02_density_O4                          0.665749    
+## part_02_density_O5                          0.626328    
+## part_02_density_FL                          0.796604    
+## part_02_density_O3_norm                     0.685053    
+## part_02_density_O4_norm                     0.450811    
+## part_02_density_O5_norm                     0.216536    
+## part_02_density_FL_norm                     0.967555    
+## part_02_density_I1                          0.606858    
+## part_02_density_I2                          0.697024    
+## part_02_density_I3                          0.986813    
+## part_02_density_I4                          0.586055    
+## part_02_density_I5                                NA    
+## part_02_density_I6                          0.990630    
+## part_02_density_I1_norm                     0.611415    
+## part_02_density_I2_norm                     0.830550    
+## part_02_density_I3_norm                     0.664308    
+## part_02_density_I4_norm                     0.909188    
+## part_02_density_I5_norm                           NA    
+## part_02_density_I6_norm                     0.791650    
+## part_02_density_I1_scaled                   0.558636    
+## part_02_density_I2_scaled                   0.978098    
+## part_02_density_I3_scaled                   0.658308    
+## part_02_density_I4_scaled                   0.972831    
+## part_02_density_I5_scaled                   0.958996    
+## part_02_density_I6_scaled                   0.790434    
+## part_02_density_M000                              NA    
+## part_02_density_E3_E1                       0.844812    
+## part_02_density_E2_E1                       0.970905    
+## part_02_density_E3_E2                       0.049824 *  
+## part_02_density_sqrt_E1                     0.511887    
+## part_02_density_sqrt_E2                     0.449815    
+## part_02_density_sqrt_E3                     0.498256    
+## part_03_blob_electron_sum                   0.584187    
+## part_03_blob_volume_sum                     0.654908    
+## part_03_blob_parts                          0.829012    
+## part_03_shape_O3                            0.428814    
+## part_03_shape_O4                            0.838908    
+## part_03_shape_O5                            0.528957    
+## part_03_shape_FL                            0.255205    
+## part_03_shape_O3_norm                       0.767065    
+## part_03_shape_O4_norm                       0.766606    
+## part_03_shape_O5_norm                       0.252883    
+## part_03_shape_FL_norm                       0.184659    
+## part_03_shape_I1                            0.972335    
+## part_03_shape_I2                            0.708963    
+## part_03_shape_I3                            0.682513    
+## part_03_shape_I4                            0.534219    
+## part_03_shape_I5                                  NA    
+## part_03_shape_I6                            0.644901    
+## part_03_shape_I1_norm                       0.177449    
+## part_03_shape_I2_norm                       0.820129    
+## part_03_shape_I3_norm                       0.820697    
+## part_03_shape_I4_norm                       0.210599    
+## part_03_shape_I5_norm                             NA    
+## part_03_shape_I6_norm                       0.194312    
+## part_03_shape_I1_scaled                     0.658725    
+## part_03_shape_I2_scaled                     0.902944    
+## part_03_shape_I3_scaled                     0.814103    
+## part_03_shape_I4_scaled                     0.918915    
+## part_03_shape_I5_scaled                     0.940473    
+## part_03_shape_I6_scaled                     0.859231    
+## part_03_shape_M000                                NA    
+## part_03_shape_E3_E1                         0.328712    
+## part_03_shape_E2_E1                         0.250657    
+## part_03_shape_E3_E2                         0.487795    
+## part_03_shape_sqrt_E1                       0.364601    
+## part_03_shape_sqrt_E2                       0.525264    
+## part_03_shape_sqrt_E3                       0.069111 .  
+## part_03_density_O3                          0.351177    
+## part_03_density_O4                          0.988617    
+## part_03_density_O5                          0.274799    
+## part_03_density_FL                          0.302177    
+## part_03_density_O3_norm                     0.760144    
+## part_03_density_O4_norm                     0.779027    
+## part_03_density_O5_norm                     0.652258    
+## part_03_density_FL_norm                     0.999508    
+## part_03_density_I1                          0.973136    
+## part_03_density_I2                          0.708556    
+## part_03_density_I3                          0.757839    
+## part_03_density_I4                          0.717493    
+## part_03_density_I5                                NA    
+## part_03_density_I6                          0.658219    
+## part_03_density_I1_norm                     0.462856    
+## part_03_density_I2_norm                     0.505531    
+## part_03_density_I3_norm                     0.737407    
+## part_03_density_I4_norm                     0.843862    
+## part_03_density_I5_norm                           NA    
+## part_03_density_I6_norm                     0.618409    
+## part_03_density_I1_scaled                   0.785158    
+## part_03_density_I2_scaled                   0.296648    
+## part_03_density_I3_scaled                   0.422151    
+## part_03_density_I4_scaled                   0.444491    
+## part_03_density_I5_scaled                   0.379689    
+## part_03_density_I6_scaled                   0.638019    
+## part_03_density_M000                              NA    
+## part_03_density_E3_E1                       0.319495    
+## part_03_density_E2_E1                       0.264730    
+## part_03_density_E3_E2                       0.531906    
+## part_03_density_sqrt_E1                     0.545072    
+## part_03_density_sqrt_E2                     0.622619    
+## part_03_density_sqrt_E3                     0.084701 .  
+## part_04_blob_electron_sum                   0.014399 *  
+## part_04_blob_volume_sum                     0.051291 .  
+## part_04_blob_parts                          0.386191    
+## part_04_shape_O3                            0.047272 *  
+## part_04_shape_O4                            0.258339    
+## part_04_shape_O5                            0.573498    
+## part_04_shape_FL                            0.597935    
+## part_04_shape_O3_norm                       0.000891 ***
+## part_04_shape_O4_norm                       0.003245 ** 
+## part_04_shape_O5_norm                       0.084211 .  
+## part_04_shape_FL_norm                       0.567789    
+## part_04_shape_I1                            0.129562    
+## part_04_shape_I2                            0.761174    
+## part_04_shape_I3                            0.996165    
+## part_04_shape_I4                            0.534583    
+## part_04_shape_I5                                  NA    
+## part_04_shape_I6                            0.823859    
+## part_04_shape_I1_norm                       0.555711    
+## part_04_shape_I2_norm                       0.768042    
+## part_04_shape_I3_norm                       0.361226    
+## part_04_shape_I4_norm                       0.506107    
+## part_04_shape_I5_norm                             NA    
+## part_04_shape_I6_norm                       0.870747    
+## part_04_shape_I1_scaled                     0.570813    
+## part_04_shape_I2_scaled                     0.843995    
+## part_04_shape_I3_scaled                     0.714542    
+## part_04_shape_I4_scaled                     0.292206    
+## part_04_shape_I5_scaled                     0.621505    
+## part_04_shape_I6_scaled                     0.294169    
+## part_04_shape_M000                                NA    
+## part_04_shape_E3_E1                         0.496393    
+## part_04_shape_E2_E1                         0.642539    
+## part_04_shape_E3_E2                         0.013928 *  
+## part_04_shape_sqrt_E1                       0.017751 *  
+## part_04_shape_sqrt_E2                       0.828564    
+## part_04_shape_sqrt_E3                       0.648313    
+## part_04_density_O3                          0.062876 .  
+## part_04_density_O4                          0.511355    
+## part_04_density_O5                          0.760477    
+## part_04_density_FL                          0.592027    
+## part_04_density_O3_norm                     0.000387 ***
+## part_04_density_O4_norm                     0.025313 *  
+## part_04_density_O5_norm                     0.209565    
+## part_04_density_FL_norm                     0.274867    
+## part_04_density_I1                          0.190923    
+## part_04_density_I2                          0.982190    
+## part_04_density_I3                          0.966399    
+## part_04_density_I4                          0.679849    
+## part_04_density_I5                                NA    
+## part_04_density_I6                          0.862325    
+## part_04_density_I1_norm                     0.486019    
+## part_04_density_I2_norm                     0.574313    
+## part_04_density_I3_norm                     0.605024    
+## part_04_density_I4_norm                     0.212279    
+## part_04_density_I5_norm                           NA    
+## part_04_density_I6_norm                     0.784600    
+## part_04_density_I1_scaled                   0.367446    
+## part_04_density_I2_scaled                   0.152154    
+## part_04_density_I3_scaled                   0.312167    
+## part_04_density_I4_scaled                   0.927390    
+## part_04_density_I5_scaled                   0.742725    
+## part_04_density_I6_scaled                   0.289991    
+## part_04_density_M000                              NA    
+## part_04_density_E3_E1                       0.598129    
+## part_04_density_E2_E1                       0.531454    
+## part_04_density_E3_E2                       0.031847 *  
+## part_04_density_sqrt_E1                     0.102360    
+## part_04_density_sqrt_E2                     0.966847    
+## part_04_density_sqrt_E3                     0.652884    
+## part_05_blob_electron_sum                   0.015463 *  
+## part_05_blob_volume_sum                     0.951143    
+## part_05_blob_parts                          0.068698 .  
+## part_05_shape_O3                            0.036997 *  
+## part_05_shape_O4                            0.455872    
+## part_05_shape_O5                            0.808133    
+## part_05_shape_FL                            0.607783    
+## part_05_shape_O3_norm                       0.048149 *  
+## part_05_shape_O4_norm                       0.102695    
+## part_05_shape_O5_norm                       0.641412    
+## part_05_shape_FL_norm                       0.898828    
+## part_05_shape_I1                            0.043226 *  
+## part_05_shape_I2                            0.560051    
+## part_05_shape_I3                            0.636890    
+## part_05_shape_I4                            0.984249    
+## part_05_shape_I5                                  NA    
+## part_05_shape_I6                            0.478269    
+## part_05_shape_I1_norm                       0.869578    
+## part_05_shape_I2_norm                       0.809335    
+## part_05_shape_I3_norm                       0.252144    
+## part_05_shape_I4_norm                       0.863743    
+## part_05_shape_I5_norm                             NA    
+## part_05_shape_I6_norm                       0.495671    
+## part_05_shape_I1_scaled                     0.816427    
+## part_05_shape_I2_scaled                     0.395820    
+## part_05_shape_I3_scaled                     0.175866    
+## part_05_shape_I4_scaled                     0.747171    
+## part_05_shape_I5_scaled                     0.636446    
+## part_05_shape_I6_scaled                     0.325345    
+## part_05_shape_M000                                NA    
+## part_05_shape_E3_E1                         0.240902    
+## part_05_shape_E2_E1                         0.738808    
+## part_05_shape_E3_E2                         0.007140 ** 
+## part_05_shape_sqrt_E1                       0.024045 *  
+## part_05_shape_sqrt_E2                       0.776743    
+## part_05_shape_sqrt_E3                       0.869528    
+## part_05_density_O3                          0.049539 *  
+## part_05_density_O4                          0.244230    
+## part_05_density_O5                          0.786227    
+## part_05_density_FL                          0.868666    
+## part_05_density_O3_norm                     0.000228 ***
+## part_05_density_O4_norm                     0.229706    
+## part_05_density_O5_norm                     0.810358    
+## part_05_density_FL_norm                     0.503200    
+## part_05_density_I1                          0.074744 .  
+## part_05_density_I2                          0.569799    
+## part_05_density_I3                          0.261173    
+## part_05_density_I4                          0.716624    
+## part_05_density_I5                                NA    
+## part_05_density_I6                          0.168595    
+## part_05_density_I1_norm                     0.781445    
+## part_05_density_I2_norm                     0.675717    
+## part_05_density_I3_norm                     0.701308    
+## part_05_density_I4_norm                     0.655018    
+## part_05_density_I5_norm                           NA    
+## part_05_density_I6_norm                     0.781244    
+## part_05_density_I1_scaled                   0.381761    
+## part_05_density_I2_scaled                   0.898750    
+## part_05_density_I3_scaled                   0.800339    
+## part_05_density_I4_scaled                   0.795255    
+## part_05_density_I5_scaled                   0.779984    
+## part_05_density_I6_scaled                   0.604130    
+## part_05_density_M000                              NA    
+## part_05_density_E3_E1                       0.253086    
+## part_05_density_E2_E1                       0.777661    
+## part_05_density_E3_E2                       0.007431 ** 
+## part_05_density_sqrt_E1                     0.009967 ** 
+## part_05_density_sqrt_E2                     0.948687    
+## part_05_density_sqrt_E3                     0.993515    
+## part_06_blob_electron_sum                   0.731099    
+## part_06_blob_volume_sum                     0.910389    
+## part_06_blob_parts                          0.815791    
+## part_06_shape_O3                            0.910359    
+## part_06_shape_O4                            0.654432    
+## part_06_shape_O5                            0.466181    
+## part_06_shape_FL                            0.772566    
+## part_06_shape_O3_norm                       0.691241    
+## part_06_shape_O4_norm                       0.842289    
+## part_06_shape_O5_norm                       0.433945    
+## part_06_shape_FL_norm                       0.788891    
+## part_06_shape_I1                            0.998034    
+## part_06_shape_I2                            0.881554    
+## part_06_shape_I3                            0.751352    
+## part_06_shape_I4                            0.816115    
+## part_06_shape_I5                                  NA    
+## part_06_shape_I6                            0.687610    
+## part_06_shape_I1_norm                       0.572068    
+## part_06_shape_I2_norm                       0.314281    
+## part_06_shape_I3_norm                       0.770224    
+## part_06_shape_I4_norm                       0.984278    
+## part_06_shape_I5_norm                             NA    
+## part_06_shape_I6_norm                       0.749794    
+## part_06_shape_I1_scaled                     0.612992    
+## part_06_shape_I2_scaled                     0.408751    
+## part_06_shape_I3_scaled                     0.565733    
+## part_06_shape_I4_scaled                     0.623447    
+## part_06_shape_I5_scaled                     0.716630    
+## part_06_shape_I6_scaled                     0.898735    
+## part_06_shape_M000                                NA    
+## part_06_shape_E3_E1                         0.647689    
+## part_06_shape_E2_E1                         0.443497    
+## part_06_shape_E3_E2                         0.266034    
+## part_06_shape_sqrt_E1                       0.821421    
+## part_06_shape_sqrt_E2                       0.766941    
+## part_06_shape_sqrt_E3                       0.598040    
+## part_06_density_O3                          0.992178    
+## part_06_density_O4                          0.613301    
+## part_06_density_O5                          0.488142    
+## part_06_density_FL                          0.799328    
+## part_06_density_O3_norm                     0.416390    
+## part_06_density_O4_norm                     0.931197    
+## part_06_density_O5_norm                     0.658292    
+## part_06_density_FL_norm                     0.756567    
+## part_06_density_I1                          0.851951    
+## part_06_density_I2                          0.670255    
+## part_06_density_I3                          0.917434    
+## part_06_density_I4                          0.913806    
+## part_06_density_I5                                NA    
+## part_06_density_I6                          0.990507    
+## part_06_density_I1_norm                     0.804726    
+## part_06_density_I2_norm                     0.686860    
+## part_06_density_I3_norm                     0.645501    
+## part_06_density_I4_norm                     0.908989    
+## part_06_density_I5_norm                           NA    
+## part_06_density_I6_norm                     0.553233    
+## part_06_density_I1_scaled                   0.773824    
+## part_06_density_I2_scaled                   0.527287    
+## part_06_density_I3_scaled                   0.867654    
+## part_06_density_I4_scaled                   0.766233    
+## part_06_density_I5_scaled                   0.794536    
+## part_06_density_I6_scaled                   0.918454    
+## part_06_density_M000                              NA    
+## part_06_density_E3_E1                       0.697668    
+## part_06_density_E2_E1                       0.382805    
+## part_06_density_E3_E2                       0.291824    
+## part_06_density_sqrt_E1                     0.784737    
+## part_06_density_sqrt_E2                     0.943636    
+## part_06_density_sqrt_E3                     0.575416    
+## part_07_blob_electron_sum                   0.667222    
+## part_07_blob_volume_sum                     0.631158    
+## part_07_blob_parts                          0.637042    
+## part_07_shape_O3                            0.805936    
+## part_07_shape_O4                            0.976470    
+## part_07_shape_O5                            0.872436    
+## part_07_shape_FL                            0.700662    
+## part_07_shape_O3_norm                       0.832813    
+## part_07_shape_O4_norm                       0.241818    
+## part_07_shape_O5_norm                       0.562804    
+## part_07_shape_FL_norm                       0.449997    
+## part_07_shape_I1                            0.857398    
+## part_07_shape_I2                            0.912765    
+## part_07_shape_I3                            0.779895    
+## part_07_shape_I4                            0.704749    
+## part_07_shape_I5                                  NA    
+## part_07_shape_I6                            0.943967    
+## part_07_shape_I1_norm                       0.877227    
+## part_07_shape_I2_norm                       0.748801    
+## part_07_shape_I3_norm                       0.783440    
+## part_07_shape_I4_norm                       0.363680    
+## part_07_shape_I5_norm                             NA    
+## part_07_shape_I6_norm                       0.801194    
+## part_07_shape_I1_scaled                     0.618681    
+## part_07_shape_I2_scaled                     0.762290    
+## part_07_shape_I3_scaled                     0.794710    
+## part_07_shape_I4_scaled                     0.995268    
+## part_07_shape_I5_scaled                     0.746008    
+## part_07_shape_I6_scaled                     0.592554    
+## part_07_shape_M000                                NA    
+## part_07_shape_E3_E1                         0.527049    
+## part_07_shape_E2_E1                         0.854153    
+## part_07_shape_E3_E2                         0.169283    
+## part_07_shape_sqrt_E1                       0.793244    
+## part_07_shape_sqrt_E2                       0.586135    
+## part_07_shape_sqrt_E3                       0.837873    
+## part_07_density_O3                          0.846157    
+## part_07_density_O4                          0.717296    
+## part_07_density_O5                          0.858743    
+## part_07_density_FL                          0.794766    
+## part_07_density_O3_norm                     0.904353    
+## part_07_density_O4_norm                     0.515144    
+## part_07_density_O5_norm                     0.609641    
+## part_07_density_FL_norm                     0.463010    
+## part_07_density_I1                          0.955281    
+## part_07_density_I2                          0.624617    
+## part_07_density_I3                          0.700710    
+## part_07_density_I4                          0.911580    
+## part_07_density_I5                                NA    
+## part_07_density_I6                          0.996120    
+## part_07_density_I1_norm                     0.739653    
+## part_07_density_I2_norm                     0.885087    
+## part_07_density_I3_norm                     0.915499    
+## part_07_density_I4_norm                     0.477720    
+## part_07_density_I5_norm                           NA    
+## part_07_density_I6_norm                     0.724730    
+## part_07_density_I1_scaled                   0.693603    
+## part_07_density_I2_scaled                   0.883185    
+## part_07_density_I3_scaled                   0.502874    
+## part_07_density_I4_scaled                   0.743870    
+## part_07_density_I5_scaled                   0.616285    
+## part_07_density_I6_scaled                   0.583227    
+## part_07_density_M000                              NA    
+## part_07_density_E3_E1                       0.483957    
+## part_07_density_E2_E1                       0.850762    
+## part_07_density_E3_E2                       0.168794    
+## part_07_density_sqrt_E1                     0.809850    
+## part_07_density_sqrt_E2                     0.502916    
+## part_07_density_sqrt_E3                     0.777981    
+## part_08_blob_electron_sum                   0.651318    
+## part_08_blob_volume_sum                     0.972755    
+## part_08_blob_parts                          0.811263    
+## part_08_shape_O3                            0.600950    
+## part_08_shape_O4                            0.713108    
+## part_08_shape_O5                            0.814474    
+## part_08_shape_FL                            0.575005    
+## part_08_shape_O3_norm                       0.851198    
+## part_08_shape_O4_norm                       0.539818    
+## part_08_shape_O5_norm                       0.962904    
+## part_08_shape_FL_norm                       0.448792    
+## part_08_shape_I1                            0.659513    
+## part_08_shape_I2                            0.764523    
+## part_08_shape_I3                            0.893247    
+## part_08_shape_I4                            0.597449    
+## part_08_shape_I5                                  NA    
+## part_08_shape_I6                            0.716341    
+## part_08_shape_I1_norm                       0.984233    
+## part_08_shape_I2_norm                       0.999604    
+## part_08_shape_I3_norm                       0.668246    
+## part_08_shape_I4_norm                       0.562889    
+## part_08_shape_I5_norm                             NA    
+## part_08_shape_I6_norm                       0.824866    
+## part_08_shape_I1_scaled                     0.814696    
+## part_08_shape_I2_scaled                     0.921845    
+## part_08_shape_I3_scaled                     0.942189    
+## part_08_shape_I4_scaled                     0.433773    
+## part_08_shape_I5_scaled                     0.498139    
+## part_08_shape_I6_scaled                     0.992503    
+## part_08_shape_M000                                NA    
+## part_08_shape_E3_E1                         0.952078    
+## part_08_shape_E2_E1                         0.810673    
+## part_08_shape_E3_E2                         0.613587    
+## part_08_shape_sqrt_E1                       0.765985    
+## part_08_shape_sqrt_E2                       0.995397    
+## part_08_shape_sqrt_E3                       0.511020    
+## part_08_density_O3                          0.599065    
+## part_08_density_O4                          0.528424    
+## part_08_density_O5                          0.653251    
+## part_08_density_FL                          0.653650    
+## part_08_density_O3_norm                     0.716022    
+## part_08_density_O4_norm                     0.709723    
+## part_08_density_O5_norm                     0.845017    
+## part_08_density_FL_norm                     0.525376    
+## part_08_density_I1                          0.884424    
+## part_08_density_I2                          0.747388    
+## part_08_density_I3                          0.992646    
+## part_08_density_I4                          0.720652    
+## part_08_density_I5                                NA    
+## part_08_density_I6                          0.735137    
+## part_08_density_I1_norm                     0.696655    
+## part_08_density_I2_norm                     0.843785    
+## part_08_density_I3_norm                     0.992590    
+## part_08_density_I4_norm                     0.669220    
+## part_08_density_I5_norm                           NA    
+## part_08_density_I6_norm                     0.743512    
+## part_08_density_I1_scaled                   0.637720    
+## part_08_density_I2_scaled                   0.633808    
+## part_08_density_I3_scaled                   0.991085    
+## part_08_density_I4_scaled                   0.761261    
+## part_08_density_I5_scaled                   0.889266    
+## part_08_density_I6_scaled                   0.626726    
+## part_08_density_M000                              NA    
+## part_08_density_E3_E1                       0.869270    
+## part_08_density_E2_E1                       0.696546    
+## part_08_density_E3_E2                       0.611727    
+## part_08_density_sqrt_E1                     0.869533    
+## part_08_density_sqrt_E2                     0.822084    
+## part_08_density_sqrt_E3                     0.550752    
+## part_09_blob_electron_sum                   0.742079    
+## part_09_blob_volume_sum                     0.415865    
+## part_09_blob_parts                          0.422327    
+## part_09_shape_O3                            0.901177    
+## part_09_shape_O4                            0.565489    
+## part_09_shape_O5                            0.502833    
+## part_09_shape_FL                            0.589357    
+## part_09_shape_O3_norm                       0.424541    
+## part_09_shape_O4_norm                       0.857402    
+## part_09_shape_O5_norm                       0.625705    
+## part_09_shape_FL_norm                       0.924155    
+## part_09_shape_I1                            0.735941    
+## part_09_shape_I2                            0.610982    
+## part_09_shape_I3                            0.953858    
+## part_09_shape_I4                            0.600168    
+## part_09_shape_I5                                  NA    
+## part_09_shape_I6                            0.584126    
+## part_09_shape_I1_norm                       0.950969    
+## part_09_shape_I2_norm                       0.997682    
+## part_09_shape_I3_norm                       0.908568    
+## part_09_shape_I4_norm                       0.753642    
+## part_09_shape_I5_norm                             NA    
+## part_09_shape_I6_norm                       0.902354    
+## part_09_shape_I1_scaled                     0.566278    
+## part_09_shape_I2_scaled                     0.967412    
+## part_09_shape_I3_scaled                     0.513308    
+## part_09_shape_I4_scaled                     0.955172    
+## part_09_shape_I5_scaled                     0.740318    
+## part_09_shape_I6_scaled                     0.483805    
+## part_09_shape_M000                                NA    
+## part_09_shape_E3_E1                         0.067640 .  
+## part_09_shape_E2_E1                         0.375201    
+## part_09_shape_E3_E2                         0.471348    
+## part_09_shape_sqrt_E1                       0.767721    
+## part_09_shape_sqrt_E2                       0.572475    
+## part_09_shape_sqrt_E3                       0.309556    
+## part_09_density_O3                          0.559234    
+## part_09_density_O4                          0.350927    
+## part_09_density_O5                          0.287629    
+## part_09_density_FL                          0.617529    
+## part_09_density_O3_norm                     0.980026    
+## part_09_density_O4_norm                     0.499467    
+## part_09_density_O5_norm                     0.941258    
+## part_09_density_FL_norm                     0.482799    
+## part_09_density_I1                          0.776923    
+## part_09_density_I2                          0.752245    
+## part_09_density_I3                          0.953070    
+## part_09_density_I4                          0.665112    
+## part_09_density_I5                                NA    
+## part_09_density_I6                          0.738543    
+## part_09_density_I1_norm                     0.489518    
+## part_09_density_I2_norm                     0.908429    
+## part_09_density_I3_norm                     0.884647    
+## part_09_density_I4_norm                     0.414986    
+## part_09_density_I5_norm                           NA    
+## part_09_density_I6_norm                     0.602736    
+## part_09_density_I1_scaled                   0.760261    
+## part_09_density_I2_scaled                   0.747818    
+## part_09_density_I3_scaled                   0.722597    
+## part_09_density_I4_scaled                   0.784537    
+## part_09_density_I5_scaled                   0.710911    
+## part_09_density_I6_scaled                   0.879016    
+## part_09_density_M000                              NA    
+## part_09_density_E3_E1                       0.060915 .  
+## part_09_density_E2_E1                       0.335811    
+## part_09_density_E3_E2                       0.478966    
+## part_09_density_sqrt_E1                     0.952736    
+## part_09_density_sqrt_E2                     0.642719    
+## part_09_density_sqrt_E3                     0.267587    
+## local_volume                                0.667871    
+## local_electrons                             0.834056    
+## local_mean                                  0.254416    
+## local_std                                   0.806370    
+## local_min                                         NA    
+## local_max                                   0.907254    
+## local_skewness                              0.829163    
+## local_parts                                       NA    
+## weight_col                                        NA    
+## grid_space                                        NA    
+## solvent_radius                                    NA    
+## solvent_opening_radius                            NA    
+## resolution_max_limit                              NA    
+## resolution                                  0.000315 ***
+## TwoFoFc_mean                                8.59e-08 ***
+## TwoFoFc_std                                  < 2e-16 ***
+## TwoFoFc_square_std                           < 2e-16 ***
+## TwoFoFc_min                                 0.025710 *  
+## TwoFoFc_max                                 1.08e-11 ***
+## Fo_mean                                     0.597079    
+## Fo_std                                      0.001014 ** 
+## Fo_square_std                               3.23e-05 ***
+## Fo_min                                       < 2e-16 ***
+## Fo_max                                      9.53e-12 ***
+## FoFc_mean                                   8.76e-08 ***
+## FoFc_std                                     < 2e-16 ***
+## FoFc_square_std                             7.01e-09 ***
+## FoFc_min                                    1.24e-06 ***
+## FoFc_max                                     < 2e-16 ***
+## Fc_mean                                     8.01e-08 ***
+## Fc_std                                       < 2e-16 ***
+## Fc_square_std                               1.18e-05 ***
+## Fc_min                                       < 2e-16 ***
+## Fc_max                                       < 2e-16 ***
+## solvent_mask_count                          2.25e-11 ***
+## void_mask_count                             0.112642    
+## modeled_mask_count                          0.008569 ** 
+## solvent_ratio                               0.000381 ***
+## TwoFoFc_bulk_mean                           2.41e-06 ***
+## TwoFoFc_bulk_std                            5.62e-05 ***
+## TwoFoFc_void_mean                           2.73e-08 ***
+## TwoFoFc_void_std                            8.47e-10 ***
+## TwoFoFc_modeled_mean                         < 2e-16 ***
+## TwoFoFc_modeled_std                          < 2e-16 ***
+## Fo_bulk_mean                                0.453007    
+## Fo_bulk_std                                 0.124432    
+## Fo_void_mean                                0.746711    
+## Fo_void_std                                 0.137852    
+## Fo_modeled_mean                             4.34e-05 ***
+## Fo_modeled_std                              7.77e-09 ***
+## FoFc_bulk_mean                              2.41e-06 ***
+## FoFc_bulk_std                               0.001485 ** 
+## FoFc_void_mean                              2.74e-08 ***
+## FoFc_void_std                               8.94e-05 ***
+## FoFc_modeled_mean                            < 2e-16 ***
+## FoFc_modeled_std                             < 2e-16 ***
+## Fc_bulk_mean                                2.41e-06 ***
+## Fc_bulk_std                                 1.78e-06 ***
+## Fc_void_mean                                2.74e-08 ***
+## Fc_void_std                                 5.88e-14 ***
+## Fc_modeled_mean                              < 2e-16 ***
+## Fc_modeled_std                               < 2e-16 ***
+## TwoFoFc_void_fit_binormal_mean1             0.605907    
+## TwoFoFc_void_fit_binormal_std1              0.598751    
+## TwoFoFc_void_fit_binormal_mean2             0.028564 *  
+## TwoFoFc_void_fit_binormal_std2                    NA    
+## TwoFoFc_void_fit_binormal_scale             0.196708    
+## TwoFoFc_solvent_fit_normal_mean             0.061838 .  
+## TwoFoFc_solvent_fit_normal_std              0.000891 ***
+## part_step_FoFc_std_min                            NA    
+## part_step_FoFc_std_max                            NA    
+## part_step_FoFc_std_step                           NA    
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 0.04858 on 39321 degrees of freedom
+## Multiple R-squared:      1,	Adjusted R-squared:      1 
+## F-statistic: 5.572e+06 on 705 and 39321 DF,  p-value: < 2.2e-16
+```
+
+```r
+#lm_data <- lm_data[sapply(lm_data, is.numeric)]
+#rmse(sim, obs, na.rm=TRUE)
+```
+
+
 
 14.Sekcję próbującą stworzyć klasyfikator przewidujący wartość atrybutu res_name (w tej sekcji należy wykorzystać wiedzę z pozostałych punktów oraz wykonać dodatkowe czynności, które mogą poprawić trafność klasyfikacji); klasyfikator powinien być wybrany w ramach optymalizacji parametrów na zbiorze walidującym; przewidywany błąd na danych z reszty populacji powinien zostać oszacowany na danych inne niż uczące za pomocą mechanizmu (stratyfikowanej!) oceny krzyżowej lub (stratyfikowanego!) 
 zbioru testowego.
 ---------------
 
+
+15. Dodatkowe - Proszę samodzielnie wybrać podzbiór atrybutów i 
+spróbować pogrupować przykłady. Pana Żurańskiego poproszę o 
+wykorzystanie w tym celu algorytmu AHC (lub innego hierarchicznego)
+Należy określić przy tym sugerowaną liczbę skupień i 
+w miarę możliwości zwizualizować charakterystykę uzyskanych skupień (np. 
+za pomocą Scatter Matrix albo Parallel Plots
+---------------
+
+```r
+# https://stat.ethz.ch/R-manual/R-devel/library/cluster/html/agnes.html
+#summary(Tab4)
+
+TabAHC <- Tab4 %>% select(res_name , res_id , local_res_atom_non_h_count , local_res_atom_non_h_electron_sum)
+
+TabAHC[is.na(TabAHC)] <- 0
+```
+
+```
+## Warning in `[<-.factor`(`*tmp*`, thisvar, value = 0): invalid factor level,
+## NA generated
+```
+
+```r
+#TabAHC <- TabAHC[sapply(TabAHC, is.numeric)]
+TabAHC <- sapply(TabAHC, as.numeric)
+
+#data(TabAHC)
+#head(TabAHC)
+an1 <- agnes(head(TabAHC), metric = "manhattan", stand = TRUE)
+plot(an1)
+```
+
+![](KZ124481Raport_files/figure-html/unnamed-chunk-17-1.png)\![](KZ124481Raport_files/figure-html/unnamed-chunk-17-2.png)\
+
+```r
+#nie mo&#xBF;na przydzieli&#xE6; wektora o rozmiarze 6.0 Gb Wykonywanie wstrzymane
+```
