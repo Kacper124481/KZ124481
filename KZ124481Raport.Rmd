@@ -192,13 +192,16 @@ dfav <- select(Tab4, matches("part_01"))
 
 nums <- sapply(dfav, as.numeric)
 
-nums <- colMeans(nums, na.rm = FALSE, dims = 1)
-nums <- nums[complete.cases(nums)]
+nums <- colMeans(nums, na.rm = TRUE, dims = 1)
+#nums <- nums[complete.cases(nums)]
 
 
-ggplot(TabP1, aes(part_01_blob_electron_sum)) + geom_histogram(aes(width=200, fill = ..count..))+ geom_vline(aes(xintercept=as.numeric(nums[1]) ),linetype="dotted" , size=1) + geom_vline(aes(xintercept=as.numeric(nums[2]) ),linetype="dashed" , size=1) + geom_vline(aes(xintercept=as.numeric(nums[3]) ),linetype="dotdash" , size=1) + theme_classic() +  ggtitle("Sekcja pokazująca rozkład wartości wszystkich kolumn") + ylab("Counter")
-
-
+nums
+for(i in seq_along(nums)) {
+plot <- ggplot(TabP1, aes(part_01_blob_electron_sum)) + geom_histogram(aes(width=200, fill = ..count..))+  geom_vline(aes(xintercept=as.numeric(nums[i]) ),linetype="dotdash" , size=1) + theme_classic() +  ggtitle(paste("Wartosc srednia",nums[i])) + ylab("Counter")
+print(plot)
+}
+#paste("Wartosc srednia",colnames(nums[i])
 ```
 
 13.Sekcję sprawdzającą czy na podstawie wartości innych kolumn można przewidzieć liczbę elektronów i atomów oraz z jaką dokładnością można dokonać takiej predykcji; trafność regresji powinna zostać oszacowana na podstawie miar R^2 i RMSE;
@@ -260,15 +263,19 @@ za pomocą Scatter Matrix albo Parallel Plots
 # https://stat.ethz.ch/R-manual/R-devel/library/cluster/html/agnes.html
 #summary(Tab4)
 
-TabAHC <- Tab4 %>% select(res_name , res_id , local_res_atom_non_h_count , local_res_atom_non_h_electron_sum)
 
-TabAHC[is.na(TabAHC)] <- 0
 #TabAHC <- TabAHC[sapply(TabAHC, is.numeric)]
-TabAHC <- sapply(TabAHC, as.numeric)
 
+# local_res_atom_non_h_electron_sum
 #data(TabAHC)
 #head(TabAHC)
-an1 <- agnes(head(TabAHC), metric = "manhattan", stand = TRUE)
-plot(an1)
+TabAHC <- Tab4 %>% select(res_name , local_res_atom_non_h_count )
+TabAHC[is.na(TabAHC)] <- 0
+TabAHC <- sapply(TabAHC, as.numeric)
+TabAHC
+an1 <- agnes(head(TabAHC,30), metric = "euclidean", diss = FALSE)
+#plot(an1)
+plot(an1, main='Dendrogram')
+an1
 #nie mo&#xBF;na przydzieli&#xE6; wektora o rozmiarze 6.0 Gb Wykonywanie wstrzymane
 ```
